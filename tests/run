@@ -1,0 +1,27 @@
+#!/bin/sh
+# Portable checks: the manifest parses and names the entry points that exist,
+# and the QML lints against the installed shell when qmllint is available.
+set -eu
+cd "$(dirname "$0")/.."
+
+node -e '
+const fs = require("fs");
+const m = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+if (m.id !== "io.github.ayandexyz.hommies") throw new Error("unexpected id " + m.id);
+for (const file of Object.values(m.entryPoints)) {
+  if (!fs.existsSync(file)) throw new Error("missing entry point " + file);
+}
+for (const file of ["BarWidget.qml", "Panel.qml", "FloatingPanel.qml"]) {
+  if (!fs.readFileSync(file, "utf8").includes("moduleName: \"" + m.id + "\"")) throw new Error(file + " moduleName does not match the manifest id");
+}
+console.log("manifest ok");
+'
+
+if command -v omarchy >/dev/null 2>&1; then omarchy plugin validate .; fi
+
+if command -v qmllint >/dev/null 2>&1 && [ "${OMARCHY_PATH:-}" != "" ]; then
+  qmllint -I "$OMARCHY_PATH/shell" ./*.qml characters/*.qml
+  echo "qmllint ok"
+else
+  echo "qmllint skipped (needs qmllint and OMARCHY_PATH)"
+fi
