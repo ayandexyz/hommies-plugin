@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.ayandexyz.hommies",
+  "name": "agent-fold",
+  "version": "0.1.0",
+  "author": "Ayan De",
+  "license": "MIT",
+  "description": "Bell in the Omarchy bar that surfaces pending coding-agent questions and permissions.",
+  "kinds": [
+    "bar-widget",
+    "service"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml",
+    "service": "Service.qml"
+  },
+  "barWidget": {
+    "displayName": "Agent Fold",
+    "description": "Answer coding-agent questions and approvals from the bar, or mirror them while answering in the native CLI.",
+    "category": "Notifications",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "questionAnswerSurface": "Top bar",
+      "desktopNotifications": true,
+      "sounds": false
+    },
+    "schema": [
+      {
+        "key": "questionAnswerSurface",
+        "type": "enum",
+        "label": "Answer agent questions in",
+        "description": "Top bar lets you answer Claude, OpenCode, and Omacode questions here (Claude waits for the bar; OpenCode and Omacode accept whichever answer comes first). Claude CLI (applies to every agent) mirrors the question in the bar while the agent's own prompt owns the answer.",
+        "options": [
+          "Top bar",
+          "Claude CLI"
+        ],
+        "defaultValue": "Top bar"
+      },
+      {
+        "key": "desktopNotifications",
+        "type": "boolean",
+        "label": "Desktop notifications",
+        "description": "Show a system notification for each new permission, question, waiting reply, or finished turn.",
+        "defaultValue": true
+      },
+      {
+        "key": "sounds",
+        "type": "boolean",
+        "label": "Sounds",
+        "description": "Play a short chime for new permissions and questions, failed turns, and finished turns (pw-play or paplay).",
+        "defaultValue": false
+      }
+    ]
+  },
+  "omarchy": {
+    "requires": [
+      "node >=20.10"
+    ]
+  }
+}

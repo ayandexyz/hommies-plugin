@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <!-- Block "O" in the style of Omacode's ASCII wordmark (█▀▀█ / █  █ / ▀▀▀▀). -->
+  <path fill="#000" fill-rule="evenodd" d="M1 2h14v12H1zM5 5v6h6V5z"/>
+</svg>
