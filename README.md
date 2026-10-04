@@ -13,22 +13,18 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
 
 - Omarchy 4 (Quattro shell)
 - Node.js 20.10 or newer
-- The `@thisisayande/hommies` npm package, which provides the local bridge
-  (`agent-fold-bridge`) this plugin starts and the hooks each agent reports through
+- The companion npm package `@thisisayande/hommies`, which provides the local
+  bridge (`agent-fold-bridge`) this plugin starts. Its source is in
+  [ayandexyz/Hommies](https://github.com/ayandexyz/Hommies) under
+  `packages/omarchy-bridge`.
 
 ## Install
 
-1. Install the bridge package and pick the agents to hook up:
+1. Install the companion package:
 
    ```sh
    npm install -g @thisisayande/hommies
-   hommies setup
    ```
-
-   `hommies setup` lists the agents it finds and lets you choose which ones to
-   connect. Before it changes an agent's config, it saves a copy next to it as
-   `<file>.agent-fold-backup-<time>`. For Codex, approve the new hooks in its
-   `/hooks` screen; restart OpenCode to load its plugin. Omacode needs no setup.
 
 2. Add the plugin:
 
@@ -39,6 +35,27 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
    Then enable it and add **Hommies** to the bar from the Omarchy plugin
    settings.
 
+3. Connect your agents. This is a separate step that you choose to run.
+
+   Hommie only sees an agent that reports to the bridge. Omacode reports to it
+   out of the box. Claude Code, Codex, and OpenCode each need an entry in their
+   own config: a hook in `~/.claude/settings.json` or `~/.codex/hooks.json`, or a
+   plugin entry in `~/.config/opencode/opencode.json`.
+
+   **This plugin never creates or edits those files.** The companion package
+   can add the entries when you run it yourself:
+
+   ```sh
+   hommies setup
+   ```
+
+   It lists the agents it finds and asks which ones to connect, and it saves a
+   copy of each config next to it (`<file>.agent-fold-backup-<time>`) before
+   changing it. For Codex, approve the new hooks in its `/hooks` screen; restart
+   OpenCode to load its plugin. To add the entries by hand instead, follow the
+   [manual setup](https://github.com/ayandexyz/Hommies/blob/main/packages/omarchy-bridge/README.md)
+   sections.
+
 ## Remove
 
 ```sh
@@ -47,10 +64,10 @@ npm uninstall -g @thisisayande/hommies
 omarchy plugin remove io.github.ayandexyz.hommies
 ```
 
-Run `hommies uninstall` before removing the npm package: it takes out only the
-hook entries setup added and keeps the rest of each config. Hooks left behind by
-removing the package first do nothing, except OpenCode's `plugin` entry, which
-you then delete from `~/.config/opencode/opencode.json` by hand.
+`hommies uninstall` takes out only the entries `hommies setup` added and keeps
+the rest of each config. Run it before removing the npm package. Hooks left
+behind by removing the package first do nothing, except OpenCode's `plugin`
+entry, which you then delete from `~/.config/opencode/opencode.json` by hand.
 
 ## What it does on your machine
 
@@ -64,8 +81,9 @@ you then delete from `~/.config/opencode/opencode.json` by hand.
   own preferences are saved in `$XDG_DATA_HOME/agent-fold/floating.json`.
 - Desktop notifications use `notify-send`; optional sounds use `pw-play` or `paplay`.
 - No telemetry, analytics, or update checks. Nothing leaves your machine.
-- Agent configs are changed only when you run `hommies setup` or
-  `hommies uninstall`, never by the plugin.
+- The plugin contains no code that installs, edits, or removes agent hooks or
+  agent config. Only the companion package's `hommies setup` and
+  `hommies uninstall` do that, and only when you run them.
 
 If the bridge is not running, every agent falls back to its own normal prompt.
 

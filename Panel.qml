@@ -57,6 +57,7 @@ Panel {
       }
 
       Text {
+        textFormat: Text.PlainText
         anchors.verticalCenter: parent.verticalCenter
         text: providerTab.providerName + "  " + providerTab.pendingCount
         color: providerTab.selected
@@ -153,6 +154,7 @@ Panel {
             running: sessionRow.busy
           }
           Text {
+            textFormat: Text.PlainText
             text: sessionRow.busy ? (sessionRow.activityState === "working" ? "Working" : "Thinking")
               : sessionRow.failure !== "" && sessionRow.pendingCount === 1 ? root.failureLabel(sessionRow.failure)
               : sessionRow.finished ? "Done" : String(sessionRow.pendingCount)
@@ -164,6 +166,7 @@ Panel {
           }
         }
         Text {
+          textFormat: Text.PlainText
           id: sessionChevron
           text: "\u203a"
           color: sessionRow.foreground
@@ -525,6 +528,7 @@ Panel {
         spacing: Style.space(8)
 
         Text {
+          textFormat: Text.PlainText
           width: parent.width
           text: "Agents"
           color: root.barForeground
@@ -565,6 +569,7 @@ Panel {
             spacing: Style.space(4)
 
             Text {
+              textFormat: Text.PlainText
               anchors.verticalCenter: parent.verticalCenter
               text: root.questionsAnsweredInTopbar ? "Answer: Top bar" : "Answer: Agent CLI"
               color: root.barForeground
@@ -583,6 +588,7 @@ Panel {
             }
 
             Text {
+              textFormat: Text.PlainText
               anchors.verticalCenter: parent.verticalCenter
               leftPadding: Style.space(8)
               text: "Notify"
@@ -602,6 +608,7 @@ Panel {
             }
 
             Text {
+              textFormat: Text.PlainText
               anchors.verticalCenter: parent.verticalCenter
               leftPadding: Style.space(8)
               text: "Sound"
@@ -698,6 +705,7 @@ Panel {
         }
 
         Text {
+          textFormat: Text.PlainText
           visible: root.currentThreads.length === 0
           width: parent.width
           topPadding: Style.space(12)
@@ -770,6 +778,7 @@ Panel {
                   size: Style.space(6)
                 }
                 Text {
+                  textFormat: Text.PlainText
                   text: threadColumn.threadData.activity && threadColumn.threadData.activity.state === "working" ? "Working"
                     : threadColumn.threadData.activity && threadColumn.threadData.activity.state === "thinking" ? "Thinking"
                     : "Recent activity"
@@ -935,6 +944,7 @@ Panel {
                   width: parent.width
                   spacing: Style.space(8)
                   Text {
+                    textFormat: Text.PlainText
                     text: itemDelegate.itemData.failure ? "!"
                       : itemDelegate.itemData.kind === "attention" ? "\u21a9"
                       : itemDelegate.itemData.kind === "finished" ? "\u2713" : "!"
@@ -975,6 +985,7 @@ Panel {
                   }
 
                   Text {
+                    textFormat: Text.PlainText
                     anchors.centerIn: parent
                     text: (itemDelegate.currentQuestion + 1) + " / " + itemDelegate.questions.length
                     color: root.barForeground
@@ -1008,6 +1019,7 @@ Panel {
                     spacing: Style.space(4)
 
                     Text {
+                      textFormat: Text.PlainText
                       width: parent.width
                       text: questionColumn.questionData.header
                       color: root.barForeground
@@ -1018,6 +1030,7 @@ Panel {
                     }
 
                     Text {
+                      textFormat: Text.PlainText
                       width: parent.width
                       text: questionColumn.questionData.question
                       color: root.barForeground
@@ -1072,6 +1085,7 @@ Panel {
                         }
 
                         Text {
+                          textFormat: Text.PlainText
                           visible: optionColumn.optionData.description !== undefined
                             && optionColumn.optionData.description !== ""
                           width: parent.width
@@ -1115,6 +1129,7 @@ Panel {
                 }
 
                 Text {
+                  textFormat: Text.PlainText
                   visible: itemDelegate.itemData.kind === "question"
                   text: itemDelegate.answerInTopbar
                     ? (itemDelegate.questions.length > 0
@@ -1144,6 +1159,7 @@ Panel {
                 }
 
                 Text {
+                  textFormat: Text.PlainText
                   visible: itemDelegate.itemData.kind === "attention" || itemDelegate.itemData.kind === "finished"
                   text: itemDelegate.itemData.failure === "ratelimit"
                     ? root.agentName(itemDelegate.itemData) + " stopped on a usage limit; retry in the terminal when it resets"

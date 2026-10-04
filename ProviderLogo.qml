@@ -41,6 +41,7 @@ Item {
   }
 
   Text {
+    textFormat: Text.PlainText
     anchors.centerIn: parent
     visible: !root.logoReady
     text: root.providerId === "claude" ? "C" : root.providerId === "codex" ? "O"
