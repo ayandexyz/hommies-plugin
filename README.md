@@ -56,6 +56,18 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
    [manual setup](https://github.com/ayandexyz/Hommies/blob/main/packages/omarchy-bridge/README.md)
    sections.
 
+## Update
+
+```sh
+npm install -g @thisisayande/hommies@<new version>
+omarchy plugin update io.github.ayandexyz.hommies
+omarchy restart shell
+```
+
+Restart the shell after updating either part. A running shell keeps the
+plugin code it first loaded, and the bridge it started keeps running the old
+package version.
+
 ## Remove
 
 ```sh
