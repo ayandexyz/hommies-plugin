@@ -4,7 +4,7 @@ import Quickshell.Wayland
 import qs.Commons
 import qs.Ui
 
-// The floating agent-fold character. A full-screen, transparent layer
+// The floating Hommies character. A full-screen, transparent layer
 // surface (like the notification toasts) so the character can sit anywhere
 // without the surface resizing; the input mask keeps every pixel except the
 // character click-through. Clicking the character opens the agent tabs
@@ -33,7 +33,7 @@ PanelWindow {
   exclusionMode: ExclusionMode.Ignore
   anchors { top: true; bottom: true; left: true; right: true }
 
-  WlrLayershell.namespace: "agent-fold-buddy"
+  WlrLayershell.namespace: "hommies-buddy"
   // Overlay sits above fullscreen windows; Top hides under them (e.g. a
   // fullscreen video). Toggled by "Over fullscreen" in the menu.
   WlrLayershell.layer: host.overFullscreen ? WlrLayer.Overlay : WlrLayer.Top

@@ -14,7 +14,7 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
 - Omarchy 4 (Quattro shell)
 - Node.js 20.10 or newer
 - The companion npm package `@thisisayande/hommies`, which provides the local
-  bridge (`agent-fold-bridge`) this plugin starts. Its source is in
+  bridge (`hommies-bridge`) this plugin starts. Its source is in
   [ayandexyz/Hommies](https://github.com/ayandexyz/Hommies) under
   `packages/omarchy-bridge`.
 
@@ -23,7 +23,7 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
 1. Install the companion package:
 
    ```sh
-   npm install -g @thisisayande/hommies
+   npm install -g @thisisayande/hommies@0.1.2
    ```
 
 2. Add the plugin:
@@ -50,7 +50,7 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
    ```
 
    It lists the agents it finds and asks which ones to connect, and it saves a
-   copy of each config next to it (`<file>.agent-fold-backup-<time>`) before
+   copy of each config next to it (`<file>.hommies-backup-<time>`) before
    changing it. For Codex, approve the new hooks in its `/hooks` screen; restart
    OpenCode to load its plugin. To add the entries by hand instead, follow the
    [manual setup](https://github.com/ayandexyz/Hommies/blob/main/packages/omarchy-bridge/README.md)
@@ -72,13 +72,13 @@ entry, which you then delete from `~/.config/opencode/opencode.json` by hand.
 ## What it does on your machine
 
 - Runs with your normal user permissions.
-- The plugin starts one background process, `agent-fold-bridge`, and restarts it
+- The plugin starts one background process, `hommies-bridge`, and restarts it
   if it exits.
 - The bridge listens on `127.0.0.1` only, on a random port, and every request must
   carry a random token. It writes the port and token to
-  `$XDG_DATA_HOME/agent-fold/port.json`.
+  `$XDG_DATA_HOME/hommies/port.json`.
 - Pending items are kept in memory and are lost when the bridge stops. Hommie's
-  own preferences are saved in `$XDG_DATA_HOME/agent-fold/floating.json`.
+  own preferences are saved in `$XDG_DATA_HOME/hommies/floating.json`.
 - Desktop notifications use `notify-send`; optional sounds use `pw-play` or `paplay`.
 - No telemetry, analytics, or update checks. Nothing leaves your machine.
 - The plugin contains no code that installs, edits, or removes agent hooks or

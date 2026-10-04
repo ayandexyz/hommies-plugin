@@ -13,7 +13,9 @@ Item {
   id: root
 
   readonly property string dataHome: Quickshell.env("XDG_DATA_HOME") || Quickshell.env("HOME") + "/.local/share"
-  readonly property string dataDir: dataHome + "/agent-fold"
+  readonly property string dataDir: dataHome + "/hommies"
+  // The folder from before the rename to Hommies; preferences saved there are carried over once.
+  readonly property string legacyDataDir: dataHome + "/agent-fold"
 
   // --- host API used by Panel.qml (same shape as BarWidget.qml) ----------
 
@@ -41,7 +43,7 @@ Item {
         root.snapshot = next
       }
     }).catch(function(error) {
-      console.warn("agent-fold snapshot failed:", error)
+      console.warn("hommies snapshot failed:", error)
     })
   }
   function syncPreferences() {
@@ -51,7 +53,7 @@ Item {
       desktopNotifications: root.desktopNotifications,
       sounds: root.sounds
     }).catch(function(error) {
-      console.warn("agent-fold preference sync failed:", error)
+      console.warn("hommies preference sync failed:", error)
     })
   }
   function setQuestionAnswerSurface(surface) { savePrefs({ questionAnswerSurface: surface === "cli" ? "cli" : "topbar" }) }
@@ -155,7 +157,7 @@ Item {
 
   Process {
     id: bridgeProcess
-    command: ["agent-fold-bridge", "--data-dir", root.dataDir, "--port", "0"]
+    command: ["hommies-bridge", "--data-dir", root.dataDir, "--port", "0"]
     running: true
     onExited: restartTimer.restart()
   }
@@ -180,7 +182,7 @@ Item {
         root.syncPreferences()
         root.refreshSnapshot()
       } catch (error) {
-        console.warn("agent-fold connection file invalid:", error)
+        console.warn("hommies connection file invalid:", error)
       }
     }
   }
@@ -193,6 +195,26 @@ Item {
       try {
         var parsed = JSON.parse(text())
         if (parsed && typeof parsed === "object") root.prefs = parsed
+      } catch (_) {}
+      root.prefsLoaded = true
+      root.syncPreferences()
+    }
+    onLoadFailed: legacyPrefsFile.path = root.legacyDataDir + "/floating.json"
+  }
+
+  // No floating.json in the Hommies folder yet: load the one saved before the
+  // rename, if any, and save it under the new folder.
+  FileView {
+    id: legacyPrefsFile
+    path: ""
+    printErrors: false
+    onLoaded: {
+      try {
+        var parsed = JSON.parse(text())
+        if (parsed && typeof parsed === "object") {
+          root.prefs = parsed
+          prefsFile.setText(JSON.stringify(parsed, null, 2) + "\n")
+        }
       } catch (_) {}
       root.prefsLoaded = true
       root.syncPreferences()

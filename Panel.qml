@@ -5,7 +5,7 @@ import qs.Ui
 import "bridge.js" as Bridge
 
 /**
- * agent-fold panel.
+ * Hommies panel.
  *
  * Opened by BarWidget.qml on click. Lists pending questions and permissions
  * grouped by thread. Claude, OpenCode, and Omacode questions retain their headers, options,
@@ -19,7 +19,7 @@ import "bridge.js" as Bridge
  * latest steps, even when nothing needs an answer (`snapshot.sessions`).
  * An `attention` item with `failure` set means the turn stopped on an API
  * error or a rate limit; it renders red or orange and is dismissed the same way.
- * Custom agents (`agent-fold-hook --agent <name>`) share the "Other" tab,
+ * Custom agents (`hommies-hook --agent <name>`) share the "Other" tab,
  * which only appears while one of them is listed.
  * "Go to terminal" focuses the Hyprland window the session runs in, when the
  * adapter sent the agent's process ancestry (`activity.focusable`).
@@ -495,7 +495,7 @@ Panel {
     Bridge.focus(thread.threadId).then(function() {
       root.close()
     }).catch(function(error) {
-      console.warn("agent-fold could not focus the terminal:", error)
+      console.warn("hommies could not focus the terminal:", error)
     })
   }
 
@@ -890,7 +890,7 @@ Panel {
                     itemDelegate.draftAnswers = ({})
                     root.close()
                   }).catch(function(error) {
-                    console.warn("agent-fold answer failed:", error)
+                    console.warn("hommies answer failed:", error)
                   })
                 }
 
@@ -906,7 +906,7 @@ Panel {
                     if (root.hostWidget && typeof root.hostWidget.refreshSnapshot === "function")
                       root.hostWidget.refreshSnapshot()
                   }).catch(function(error) {
-                    console.warn("agent-fold permission response failed:", error)
+                    console.warn("hommies permission response failed:", error)
                   })
                 }
 

@@ -12,12 +12,12 @@ function snapshot() {
 }
 
 function respond(input) {
-  if (!connection) return Promise.reject(new Error("agent-fold bridge is unavailable"))
+  if (!connection) return Promise.reject(new Error("Hommies bridge is unavailable"))
   return request("POST", "/v1/respond", input)
 }
 
 function focus(threadId) {
-  if (!connection) return Promise.reject(new Error("agent-fold bridge is unavailable"))
+  if (!connection) return Promise.reject(new Error("Hommies bridge is unavailable"))
   return request("POST", "/v1/focus", { threadId: threadId })
 }
 
@@ -32,7 +32,7 @@ function request(method, path, body) {
   return new Promise(function(resolve, reject) {
     var xhr = new XMLHttpRequest()
     xhr.open(method, "http://127.0.0.1:" + connection.port + path)
-    xhr.setRequestHeader("x-agent-fold-token", connection.token)
+    xhr.setRequestHeader("x-hommies-token", connection.token)
     xhr.setRequestHeader("content-type", "application/json")
     xhr.onload = function() {
       if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText))

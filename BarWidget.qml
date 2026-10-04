@@ -6,7 +6,7 @@ import qs.Ui
 import "bridge.js" as Bridge
 
 /**
- * agent-fold bar widget.
+ * Hommies bar widget.
  *
  * Shows a bell glyph with a pending count badge. Click toggles the Panel
  * (defined in Panel.qml), which lists the pending items grouped by thread.
@@ -75,7 +75,7 @@ BarWidget {
         }
         root.primed = true
       }).catch((error) => {
-        console.warn("agent-fold snapshot failed:", error)
+        console.warn("hommies snapshot failed:", error)
       })
     }
   }
@@ -86,7 +86,7 @@ BarWidget {
       desktopNotifications: root.desktopNotifications,
       sounds: root.sounds
     }).catch((error) => {
-      console.warn("agent-fold preference sync failed:", error)
+      console.warn("hommies preference sync failed:", error)
     })
   }
   function setQuestionAnswerSurface(surface) {
@@ -125,7 +125,7 @@ BarWidget {
   StatusPalette { id: statusColors }
 
   FileView {
-    path: (Quickshell.env("XDG_DATA_HOME") || Quickshell.env("HOME") + "/.local/share") + "/agent-fold/port.json"
+    path: (Quickshell.env("XDG_DATA_HOME") || Quickshell.env("HOME") + "/.local/share") + "/hommies/port.json"
     watchChanges: true
     printErrors: false
     onFileChanged: reload()
@@ -135,7 +135,7 @@ BarWidget {
         root.syncPreferences()
         root.refreshSnapshot()
       } catch (error) {
-        console.warn("agent-fold connection file invalid:", error)
+        console.warn("hommies connection file invalid:", error)
       }
     }
   }

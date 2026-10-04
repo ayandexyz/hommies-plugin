@@ -5,7 +5,7 @@ import qs.Ui
 import "bridge.js" as Bridge
 
 /**
- * agent-fold floating panel.
+ * Hommies floating panel.
  *
  * The card that FloatingBuddy.qml opens next to the floating character. It
  * started as a copy of Panel.qml (the bar popout) and is kept separate on
@@ -464,7 +464,7 @@ Panel {
     Bridge.focus(thread.threadId).then(function() {
       root.close()
     }).catch(function(error) {
-      console.warn("agent-fold could not focus the terminal:", error)
+      console.warn("hommies could not focus the terminal:", error)
     })
   }
 
@@ -703,7 +703,7 @@ Panel {
                       itemDelegate.draftAnswers = ({})
                       root.close()
                     }).catch(function(error) {
-                      console.warn("agent-fold answer failed:", error)
+                      console.warn("hommies answer failed:", error)
                     })
                   }
 
@@ -719,7 +719,7 @@ Panel {
                       if (root.hostWidget && typeof root.hostWidget.refreshSnapshot === "function")
                         root.hostWidget.refreshSnapshot()
                     }).catch(function(error) {
-                      console.warn("agent-fold permission response failed:", error)
+                      console.warn("hommies permission response failed:", error)
                     })
                   }
 
