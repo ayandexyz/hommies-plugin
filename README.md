@@ -23,7 +23,7 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
 1. Install the companion package:
 
    ```sh
-   npm install -g @thisisayande/hommies@0.1.3
+   npm install -g @thisisayande/hommies@0.1.5
    ```
 
 2. Add the plugin:
@@ -91,7 +91,10 @@ entry, which you then delete from `~/.config/opencode/opencode.json` by hand.
   `$XDG_DATA_HOME/hommies/port.json`.
 - Pending items are kept in memory and are lost when the bridge stops. Hommie's
   own preferences are saved in `$XDG_DATA_HOME/hommies/floating.json`.
-- Desktop notifications use `notify-send`; optional sounds use `pw-play` or `paplay`.
+- Desktop notifications use `notify-send` and only name the agent and the kind of
+  item (for example "Claude" / "Permission needed"). They never include the
+  question, command, file path, session title, or project folder, because process
+  arguments are visible to other local users. Optional sounds use `pw-play` or `paplay`.
 - No telemetry, analytics, or update checks. Nothing leaves your machine.
 - The plugin contains no code that installs, edits, or removes agent hooks or
   agent config. Only the companion package's `hommies setup` and
