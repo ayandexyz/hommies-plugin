@@ -1,9 +1,28 @@
 .pragma library
 
+// port.json can outlive the bridge (a crash leaves it behind), and the freed
+// port is then free for any local user. So the client only talks to the port
+// the running child process announced (Service.qml), and drops the
+// connection the moment that process exits.
 var connection = null
+var fileConnection = null
+var livePort = 0
 
+function apply() {
+  connection = fileConnection && livePort > 0 && fileConnection.port === livePort ? fileConnection : null
+  return connection !== null
+}
+
+/** The contents of port.json. Used only while its port matches the live bridge. */
 function configure(next) {
-  if (next && Number.isInteger(next.port) && typeof next.token === "string") connection = next
+  if (next && Number.isInteger(next.port) && typeof next.token === "string") fileConnection = next
+  return apply()
+}
+
+/** The port the running hommies-bridge printed, or 0 once it has exited. */
+function setLivePort(port) {
+  livePort = Number.isInteger(port) && port > 0 && port < 65536 ? port : 0
+  return apply()
 }
 
 function snapshot() {

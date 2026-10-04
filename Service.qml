@@ -159,7 +159,20 @@ Item {
     id: bridgeProcess
     command: ["hommies-bridge", "--data-dir", root.dataDir, "--port", "0"]
     running: true
-    onExited: restartTimer.restart()
+    // Only the port this child announces is trusted (see bridge.js).
+    stdout: SplitParser {
+      onRead: function(line) {
+        var match = /^hommies-bridge listening on 127\.0\.0\.1:(\d+)$/.exec(String(line).trim())
+        if (match && Bridge.setLivePort(Number(match[1]))) {
+          root.syncPreferences()
+          root.refreshSnapshot()
+        }
+      }
+    }
+    onExited: {
+      Bridge.setLivePort(0)
+      restartTimer.restart()
+    }
   }
 
   Timer {
@@ -170,7 +183,7 @@ Item {
   }
 
   // The daemon rewrites port.json on every start; reconfigure the client
-  // each time it changes.
+  // each time it changes. It takes effect once the port matches the child's.
   FileView {
     path: root.dataDir + "/port.json"
     watchChanges: true

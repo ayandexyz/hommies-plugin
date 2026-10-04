@@ -23,7 +23,7 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
 1. Install the companion package:
 
    ```sh
-   npm install -g @thisisayande/hommies@0.1.5
+   npm install -g @thisisayande/hommies@0.1.6
    ```
 
 2. Add the plugin:
@@ -88,7 +88,12 @@ entry, which you then delete from `~/.config/opencode/opencode.json` by hand.
   if it exits.
 - The bridge listens on `127.0.0.1` only, on a random port, and every request must
   carry a random token. It writes the port and token to
-  `$XDG_DATA_HOME/hommies/port.json`.
+  `$XDG_DATA_HOME/hommies/port.json` (mode `0600`) and removes it when it stops.
+- Nothing trusts a stale port. The plugin only talks to the port the running
+  `hommies-bridge` child announced, and stops when that process exits. Agent
+  hooks check that the port belongs to your user before sending anything, and
+  only accept a decision signed with a key that never leaves `port.json`.
+  Otherwise the agent keeps its own prompt.
 - Pending items are kept in memory and are lost when the bridge stops. Hommie's
   own preferences are saved in `$XDG_DATA_HOME/hommies/floating.json`.
 - Desktop notifications use `notify-send` and only name the agent and the kind of
