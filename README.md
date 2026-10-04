@@ -36,7 +36,7 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
    omarchy plugin add https://github.com/ayandexyz/hommies-plugin
    ```
 
-   Then enable it and add **Agent Fold** to the bar from the Omarchy plugin
+   Then enable it and add **Hommies** to the bar from the Omarchy plugin
    settings.
 
 ## Remove
