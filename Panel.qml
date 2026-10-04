@@ -273,6 +273,34 @@ Panel {
 
   readonly property bool showOtherTab: providerCount("other") > 0 || sessionActivity("other").length > 0
 
+  /**
+   * Built-in agents that get a tab: the ones with Hommies hooks (the bridge's
+   * `hooksConnected`) plus any that reported a session or item, such as
+   * Omacode, which has no config to detect. All four until one qualifies.
+   */
+  readonly property var shownProviders: {
+    var connected = hostWidget && hostWidget.snapshot && hostWidget.snapshot.hooksConnected
+      ? hostWidget.snapshot.hooksConnected : []
+    var shown = []
+    for (var index = 0; index < builtInProviders.length; index++) {
+      var provider = builtInProviders[index]
+      var isConnected = false
+      // XMLHttpRequest JSON arrays can arrive as array-like objects; no indexOf.
+      for (var connectedIndex = 0; connectedIndex < connected.length; connectedIndex++) {
+        if (String(connected[connectedIndex]) === provider) isConnected = true
+      }
+      if (isConnected || providerCount(provider) > 0 || sessionActivity(provider).length > 0) shown.push(provider)
+    }
+    return shown.length > 0 ? shown : builtInProviders
+  }
+
+  // Keep the selection on a visible tab when tabs come and go.
+  function keepSelectionVisible() {
+    if (selectedProvider !== "other" && shownProviders.indexOf(selectedProvider) < 0) selectedProvider = shownProviders[0]
+  }
+  onShownProvidersChanged: keepSelectionVisible()
+  Component.onCompleted: keepSelectionVisible()
+
   function sessionProject(thread) {
     if (thread.project) return String(thread.project)
     // Bridges older than `project` only send "Claude Code — <folder>".
@@ -634,10 +662,11 @@ Panel {
           width: parent.width
           spacing: Style.space(8)
 
-          readonly property int tabCount: root.showOtherTab ? 5 : 4
+          readonly property int tabCount: root.shownProviders.length + (root.showOtherTab ? 1 : 0)
           readonly property real tabWidth: (width - spacing * (tabCount - 1)) / tabCount
 
           ProviderTab {
+            visible: root.shownProviders.indexOf("claude") >= 0
             width: providerTabs.tabWidth
             providerId: "claude"
             providerName: "Claude"
@@ -651,6 +680,7 @@ Panel {
           }
 
           ProviderTab {
+            visible: root.shownProviders.indexOf("codex") >= 0
             width: providerTabs.tabWidth
             providerId: "codex"
             providerName: "Codex"
@@ -664,6 +694,7 @@ Panel {
           }
 
           ProviderTab {
+            visible: root.shownProviders.indexOf("opencode") >= 0
             width: providerTabs.tabWidth
             providerId: "opencode"
             providerName: "OpenCode"
@@ -677,6 +708,7 @@ Panel {
           }
 
           ProviderTab {
+            visible: root.shownProviders.indexOf("omacode") >= 0
             width: providerTabs.tabWidth
             providerId: "omacode"
             providerName: "Omacode"

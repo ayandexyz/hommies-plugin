@@ -23,7 +23,7 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
 1. Install the companion package:
 
    ```sh
-   npm install -g @thisisayande/hommies@0.1.2
+   npm install -g @thisisayande/hommies@0.1.3
    ```
 
 2. Add the plugin:

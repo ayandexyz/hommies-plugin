@@ -265,6 +265,34 @@ Panel {
 
   readonly property bool showOtherTab: providerCount("other") > 0 || sessionActivity("other").length > 0
 
+  /**
+   * Built-in agents that get a tab: the ones with Hommies hooks (the bridge's
+   * `hooksConnected`) plus any that reported a session or item, such as
+   * Omacode, which has no config to detect. All four until one qualifies.
+   */
+  readonly property var shownProviders: {
+    var connected = hostWidget && hostWidget.snapshot && hostWidget.snapshot.hooksConnected
+      ? hostWidget.snapshot.hooksConnected : []
+    var shown = []
+    for (var index = 0; index < builtInProviders.length; index++) {
+      var provider = builtInProviders[index]
+      var isConnected = false
+      // XMLHttpRequest JSON arrays can arrive as array-like objects; no indexOf.
+      for (var connectedIndex = 0; connectedIndex < connected.length; connectedIndex++) {
+        if (String(connected[connectedIndex]) === provider) isConnected = true
+      }
+      if (isConnected || providerCount(provider) > 0 || sessionActivity(provider).length > 0) shown.push(provider)
+    }
+    return shown.length > 0 ? shown : builtInProviders
+  }
+
+  // Keep the selection on a visible tab when tabs come and go.
+  function keepSelectionVisible() {
+    if (selectedProvider !== "other" && shownProviders.indexOf(selectedProvider) < 0) selectedProvider = shownProviders[0]
+  }
+  onShownProvidersChanged: keepSelectionVisible()
+  Component.onCompleted: keepSelectionVisible()
+
   function sessionProject(thread) {
     if (thread.project) return String(thread.project)
     // Bridges older than `project` only send "Claude Code — <folder>".
@@ -491,9 +519,7 @@ Panel {
           spacing: Style.space(6)
 
           Repeater {
-            model: root.showOtherTab
-              ? ["claude", "codex", "opencode", "omacode", "other"]
-              : ["claude", "codex", "opencode", "omacode"]
+            model: root.showOtherTab ? root.shownProviders.concat(["other"]) : root.shownProviders
 
             delegate: ProviderTab {
               width: providerTabs.width
