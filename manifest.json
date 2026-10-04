@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "id": "io.github.ayandexyz.hommies",
-  "name": "agent-fold",
+  "name": "Hommies",
   "version": "0.1.0",
   "author": "Ayan De",
   "license": "MIT",
-  "description": "Bell in the Omarchy bar that surfaces pending coding-agent questions and permissions.",
+  "description": "Hommie, a floating companion that watches your coding agents (Claude Code, Codex, OpenCode, Omacode) and lets you approve permissions, answer questions, and see when turns finish.",
   "kinds": [
     "bar-widget",
     "service"
@@ -15,7 +15,7 @@
     "service": "Service.qml"
   },
   "barWidget": {
-    "displayName": "Agent Fold",
+    "displayName": "Hommies",
     "description": "Answer coding-agent questions and approvals from the bar, or mirror them while answering in the native CLI.",
     "category": "Notifications",
     "allowMultiple": false,

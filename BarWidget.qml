@@ -172,7 +172,7 @@ BarWidget {
     fixedHeight: vertical ? bellContent.implicitHeight + scaledVerticalPadding * 2 : -1
     tooltipText: (root.totalCount > 0
       ? root.totalCount + " pending agent item(s)"
-      : "agent-fold: no pending items")
+      : "Hommies: no pending items")
       + (root.busyCount > 0 ? "\n" + root.busyCount + " agent session(s) working" : "")
     onPressed: function (buttonCode) {
       if (buttonCode === Qt.LeftButton) root.toggle()
