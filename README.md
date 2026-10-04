@@ -1,5 +1,7 @@
 # Hommies
 
+![Hommie in each of its moods](preview.png)
+
 Hommie is a floating companion for the Omarchy desktop that watches your coding
 agents (Claude Code, Codex, OpenCode, and Omacode). When an agent asks for a
 permission, asks you a question, or finishes a turn, Hommie's mood changes and
