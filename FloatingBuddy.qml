@@ -37,7 +37,9 @@ PanelWindow {
   // Overlay sits above fullscreen windows; Top hides under them (e.g. a
   // fullscreen video). Toggled by "Over fullscreen" in the menu.
   WlrLayershell.layer: host.overFullscreen ? WlrLayer.Overlay : WlrLayer.Top
-  WlrLayershell.keyboardFocus: cardOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+  // A card opened by a shortcut takes the keyboard at once; one opened by a click gets it on demand.
+  WlrLayershell.keyboardFocus: !cardOpen ? WlrKeyboardFocus.None
+    : panel && panel.keyboardOpened ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
 
   mask: cardOpen || menuOpen ? null : buddyRegion
   Region { id: buddyRegion; item: buddy }
@@ -211,6 +213,45 @@ PanelWindow {
         checked: root.host.sounds
         onToggled: root.host.setSounds(!checked)
       }
+      // Outfit: ‹ › step through Auto, None, and every outfit.
+      Item {
+        width: parent.width
+        height: Math.max(outfitText.implicitHeight, previousOutfit.height)
+
+        Text {
+          id: outfitText
+          anchors.left: parent.left
+          anchors.right: previousOutfit.left
+          anchors.rightMargin: Style.space(8)
+          anchors.verticalCenter: parent.verticalCenter
+          text: "Outfit: " + root.host.outfitLabel(root.host.outfitChoice)
+            + (root.host.outfitChoice === "auto" && root.host.outfit !== "" ? " (" + root.host.outfitLabel(root.host.outfit) + ")" : "")
+          textFormat: Text.PlainText
+          elide: Text.ElideRight
+          color: Color.popups.text
+          font.family: Style.font.family
+          font.pixelSize: Style.font.bodySmall
+        }
+        Button {
+          id: previousOutfit
+          anchors.right: nextOutfit.left
+          anchors.rightMargin: Style.space(4)
+          anchors.verticalCenter: parent.verticalCenter
+          text: "\u2039"
+          bordered: true
+          tooltipText: "Previous outfit"
+          onClicked: root.host.cycleOutfit(-1)
+        }
+        Button {
+          id: nextOutfit
+          anchors.right: parent.right
+          anchors.verticalCenter: parent.verticalCenter
+          text: "\u203a"
+          bordered: true
+          tooltipText: "Next outfit"
+          onClicked: root.host.cycleOutfit(1)
+        }
+      }
       MenuToggle {
         label: "Over fullscreen"
         checked: root.host.overFullscreen
@@ -245,6 +286,16 @@ PanelWindow {
         item.mood = Qt.binding(function() { return root.host.mood })
         item.lookX = Qt.binding(function() { return character.lookX })
         item.lookY = Qt.binding(function() { return character.lookY })
+        // Optional in the contract: characters without `outfit` simply wear nothing.
+        if ("outfit" in item) item.outfit = Qt.binding(function() { return root.host.outfit })
+      }
+
+      // Emotes from the service (a finished turn, or `omarchy-shell hommies emote <name>`).
+      Connections {
+        target: root.host
+        function onEmoteRequested(name) {
+          if (character.item && typeof character.item.emote === "function") character.item.emote(name)
+        }
       }
 
       // Follow the pointer while hovered, glance at the card while it's
