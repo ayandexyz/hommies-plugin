@@ -20,7 +20,31 @@ console.log("manifest ok");
 if command -v omarchy >/dev/null 2>&1; then omarchy plugin validate .; fi
 
 if command -v qmllint >/dev/null 2>&1 && [ "${OMARCHY_PATH:-}" != "" ]; then
-  qmllint -I "$OMARCHY_PATH/shell" ./*.qml characters/*.qml
+  # qmllint exits 255 without a message on files with an IpcHandler (its typed
+  # `function f(): string` signatures; the shell's own plugins hit it too).
+  # Lint those on a temporary copy with the IpcHandler block removed.
+  copy="$(mktemp -d)"
+  trap 'rm -rf "$copy"' EXIT
+  cp -r . "$copy/plugin"
+  for file in ./*.qml characters/*.qml; do
+    if grep -q "IpcHandler {" "$file"; then
+      node -e '
+const fs = require("fs");
+const path = process.argv[1];
+const text = fs.readFileSync(path, "utf8");
+const start = text.indexOf("  IpcHandler {");
+let depth = 0, end = start;
+for (; end < text.length; end++) {
+  if (text[end] === "{") depth++;
+  else if (text[end] === "}" && --depth === 0) break;
+}
+fs.writeFileSync(path, text.slice(0, start) + text.slice(end + 1));
+' "$copy/plugin/$file"
+      qmllint -I "$OMARCHY_PATH/shell" -I "$copy/plugin" "$copy/plugin/$file"
+    else
+      qmllint -I "$OMARCHY_PATH/shell" -I . "$file"
+    fi
+  done
   echo "qmllint ok"
 else
   echo "qmllint skipped (needs qmllint and OMARCHY_PATH)"

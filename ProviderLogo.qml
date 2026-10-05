@@ -3,7 +3,9 @@ import QtQuick.Effects
 import qs.Commons
 
 // Provider mark adapted from omarchy-tokentracker. The source SVG is hidden
-// and recolored so it follows the active Omarchy theme.
+// and recolored so it follows the active Omarchy theme. The Antigravity mark
+// is LobeHub's (MIT) and Grok's is from homarr-labs/dashboard-icons. Providers
+// without an SVG (Gemini, custom agents) show short letters instead.
 Item {
   id: root
 
@@ -15,6 +17,8 @@ Item {
     : providerId === "codex" ? "codex.svg"
     : providerId === "opencode" ? "opencode.svg"
     : providerId === "omacode" ? "omacode.svg"
+    : providerId === "antigravity" ? "antigravity.svg"
+    : providerId === "grok" ? "grok.svg"
     : ""
   readonly property bool logoReady: logoFile !== "" && logoImage.status === Image.Ready
 
@@ -46,6 +50,8 @@ Item {
     visible: !root.logoReady
     text: root.providerId === "claude" ? "C" : root.providerId === "codex" ? "O"
       : root.providerId === "opencode" ? "OC" : root.providerId === "omacode" ? "OM"
+      : root.providerId === "gemini" ? "G" : root.providerId === "antigravity" ? "AG"
+      : root.providerId === "grok" ? "X"
       : root.providerId === "other" ? "+" : "?"
     color: root.tint
     font.family: root.fontFamily

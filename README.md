@@ -1,13 +1,17 @@
 # Hommies
 
-![Hommie in each of its moods](preview.png)
+![Hommie's moods and expressions](preview.png)
 
 Hommie is a floating companion for the Omarchy desktop that watches your coding
-agents (Claude Code, Codex, OpenCode, and Omacode). When an agent asks for a
-permission, asks you a question, or finishes a turn, Hommie's mood changes and
-the item shows up in a card beside it and in a bell in the top bar. You can
-approve or decline permissions and answer questions from there, or leave the
-answer to the agent's own prompt and use Hommie as a read-only mirror.
+agents (Claude Code, Codex, OpenCode, Omacode, Gemini CLI, Antigravity, and Grok
+Build). When an agent asks for a permission, asks you a question, or finishes a
+turn, Hommie's mood changes and the item shows up in a card beside it and in a
+bell in the top bar. You can approve or decline permissions and answer
+questions from there, or leave the answer to the agent's own prompt and use
+Hommie as a read-only mirror.
+
+While an agent works you see its latest steps, with `+N −M` line counts for
+file edits, and when a turn ends you can read the agent's full final message.
 
 ## Requirements
 
@@ -23,7 +27,7 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
 1. Install the companion package:
 
    ```sh
-   npm install -g @thisisayande/hommies@0.1.6
+   npm install -g @thisisayande/hommies@0.2.1
    ```
 
 2. Add the plugin:
@@ -38,9 +42,11 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
 3. Connect your agents. This is a separate step that you choose to run.
 
    Hommie only sees an agent that reports to the bridge. Omacode reports to it
-   out of the box. Claude Code, Codex, and OpenCode each need an entry in their
-   own config: a hook in `~/.claude/settings.json` or `~/.codex/hooks.json`, or a
-   plugin entry in `~/.config/opencode/opencode.json`.
+   out of the box. The others each need an entry in their own config: a hook in
+   `~/.claude/settings.json`, `~/.codex/hooks.json`, `~/.gemini/settings.json`
+   (Gemini CLI), `~/.gemini/config/hooks.json` (Antigravity), or
+   `~/.grok/hooks/hommies.json` (Grok Build), or a plugin entry in
+   `~/.config/opencode/opencode.json`.
 
    **This plugin never creates or edits those files.** The companion package
    can add the entries when you run it yourself:
@@ -52,7 +58,8 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
    It lists the agents it finds and asks which ones to connect, and it saves a
    copy of each config next to it (`<file>.hommies-backup-<time>`) before
    changing it. For Codex, approve the new hooks in its `/hooks` screen; restart
-   OpenCode to load its plugin. To add the entries by hand instead, follow the
+   OpenCode, Gemini CLI, `agy`, and `grok` so they load the new entries. To add
+   the entries by hand instead, follow the
    [manual setup](https://github.com/ayandexyz/Hommies/blob/main/packages/omarchy-bridge/README.md)
    sections.
 
@@ -61,12 +68,14 @@ answer to the agent's own prompt and use Hommie as a read-only mirror.
 ```sh
 npm install -g @thisisayande/hommies@<new version>
 omarchy plugin update io.github.ayandexyz.hommies
+hommies setup
 omarchy restart shell
 ```
 
 Restart the shell after updating either part. A running shell keeps the
 plugin code it first loaded, and the bridge it started keeps running the old
-package version.
+package version. Run `hommies setup` again when a release adds agents or hook
+events (0.2 does both); until then the panel says the hooks are out of date.
 
 ## Remove
 
@@ -111,8 +120,37 @@ If the bridge is not running, every agent falls back to its own normal prompt.
 
 Right-click Hommie for its settings: whether questions are answered here or in
 the agent's CLI, desktop notifications, sounds, showing over fullscreen windows,
-and moving it to the next monitor. Drag it to move it. The bar bell has the same
-answer-surface, notification, and sound settings.
+his outfit, and moving it to the next monitor. Drag it to move it. The bar bell
+has the same answer-surface, notification, and sound settings.
+
+**Outfits.** Use **Outfit ‹ ›** to dress Hommie in a party hat, beanie, crown,
+Santa hat, pumpkin, bow, glasses, sunglasses, or a scarf. **Auto** (the
+default) dresses him for the season: a pumpkin from 20 October, a Santa hat in
+December, and a party hat over New Year.
+
+**Answering from the bar.** Claude Code, OpenCode, Omacode, Antigravity, and
+Grok Build questions can be answered here. Antigravity and Grok cannot take an
+answer from a hook directly, so your answer reaches the agent as the reason its
+own question prompt was skipped; their screens may show that prompt as
+blocked. Codex questions are shown read-only.
+
+## Keyboard shortcuts
+
+Plugins cannot bind keys, so Hommie exposes its actions over shell IPC and you
+add the binds yourself, for example in `~/.config/hypr/bindings.lua`:
+
+```lua
+o.bind("SUPER + ALT + A", "Hommies: answer next", "omarchy-shell hommies jumpToPending")
+o.bind("SUPER + ALT + H", "Hommies: toggle card", "omarchy-shell hommies toggle")
+o.bind("SUPER + ALT + T", "Hommies: go to agent terminal", "omarchy-shell hommies focusTerminal")
+```
+
+Other actions: `open`, `close`, `toggleSounds`, `toggleNotifications`,
+`outfit <name>`, and `emote <name>`. In the open card, the arrow keys (or
+`h`/`j`/`k`/`l`) move between sessions and agents, Enter opens a session, `a` /
+`d` / `A` allow, deny, or always allow a permission, `1`–`9` pick a question's
+option, `x` dismisses a finished item, `t` jumps to the agent's terminal, and
+Esc goes back.
 
 ## Source
 

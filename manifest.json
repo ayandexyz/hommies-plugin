@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "io.github.ayandexyz.hommies",
   "name": "Hommies",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Ayan De",
   "license": "MIT",
-  "description": "Hommie, a floating companion that watches your coding agents (Claude Code, Codex, OpenCode, Omacode) and lets you approve permissions, answer questions, and see when turns finish.",
+  "description": "Hommie, a floating companion that watches your coding agents (Claude Code, Codex, OpenCode, Omacode, Gemini CLI, Antigravity, Grok Build) and lets you approve permissions, answer questions, and see when turns finish.",
   "kinds": [
     "bar-widget",
     "service"
@@ -30,7 +30,7 @@
         "key": "questionAnswerSurface",
         "type": "enum",
         "label": "Answer agent questions in",
-        "description": "Top bar lets you answer Claude, OpenCode, and Omacode questions here (Claude waits for the bar; OpenCode and Omacode accept whichever answer comes first). Claude CLI (applies to every agent) mirrors the question in the bar while the agent's own prompt owns the answer.",
+        "description": "Top bar lets you answer Claude, OpenCode, Omacode, Antigravity, and Grok questions here (Claude, Antigravity, and Grok wait for the bar; OpenCode and Omacode accept whichever answer comes first). Claude CLI (applies to every agent) mirrors the question in the bar while the agent's own prompt owns the answer.",
         "options": [
           "Top bar",
           "Claude CLI"

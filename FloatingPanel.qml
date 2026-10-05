@@ -3,6 +3,7 @@ import Quickshell
 import qs.Commons
 import qs.Ui
 import "bridge.js" as Bridge
+import "markdown.js" as Markdown
 
 /**
  * Hommies floating panel.
@@ -240,9 +241,14 @@ Panel {
     return null
   }
 
-  onSelectedProviderChanged: selectedThreadId = ""
+  onSelectedProviderChanged: {
+    selectedThreadId = ""
+    sessionCursor = 0
+  }
 
-  readonly property var builtInProviders: ["claude", "codex", "opencode", "omacode"]
+  readonly property var builtInProviders: ["claude", "codex", "opencode", "omacode", "gemini", "antigravity", "grok"]
+  /** Tabs shown before any agent is connected or active; the newer agents appear once they are. */
+  readonly property var defaultProviders: ["claude", "codex", "opencode", "omacode"]
 
   function isBuiltIn(provider) {
     return builtInProviders.indexOf(String(provider)) >= 0
@@ -255,7 +261,9 @@ Panel {
 
   function providerName(provider) {
     return provider === "codex" ? "Codex" : provider === "opencode" ? "OpenCode"
-      : provider === "omacode" ? "Omacode" : provider === "other" ? "Other"
+      : provider === "omacode" ? "Omacode" : provider === "gemini" ? "Gemini"
+      : provider === "antigravity" ? "Antigravity" : provider === "grok" ? "Grok"
+      : provider === "other" ? "Other"
       : provider === "claude" ? "Claude" : String(provider || "Agent")
   }
 
@@ -268,7 +276,7 @@ Panel {
   /**
    * Built-in agents that get a tab: the ones with Hommies hooks (the bridge's
    * `hooksConnected`) plus any that reported a session or item, such as
-   * Omacode, which has no config to detect. All four until one qualifies.
+   * Omacode, which has no config to detect. `defaultProviders` until one qualifies.
    */
   readonly property var shownProviders: {
     var connected = hostWidget && hostWidget.snapshot && hostWidget.snapshot.hooksConnected
@@ -283,7 +291,7 @@ Panel {
       }
       if (isConnected || providerCount(provider) > 0 || sessionActivity(provider).length > 0) shown.push(provider)
     }
-    return shown.length > 0 ? shown : builtInProviders
+    return shown.length > 0 ? shown : defaultProviders
   }
 
   // Keep the selection on a visible tab when tabs come and go.
@@ -309,16 +317,53 @@ Panel {
     return prefix + sessionProject(thread) + "  \u00b7  " + String(thread.threadId).slice(0, 8)
   }
 
-  function latestStep(thread) {
-    var steps = thread.activity && thread.activity.steps ? thread.activity.steps : []
-    return steps.length > 0 ? String(steps[steps.length - 1]) : ""
+  /** Turn-end items whose full message is shown, by item id; kept here so a refresh does not fold them. */
+  property var openMessages: ({})
+
+  function messageOpen(item) {
+    return item && openMessages[item.id] === true
   }
 
-  /** The open session's latest steps, newest last. */
+  function toggleMessage(item) {
+    var next = {}
+    for (var key in openMessages) next[key] = openMessages[key]
+    if (next[item.id]) delete next[item.id]
+    else next[item.id] = true
+    openMessages = next
+  }
+
+  /** Line counts for step `index`, or null when it is not a file edit (older bridges never send them). */
+  function stepEdit(thread, index) {
+    var edits = thread && thread.activity && thread.activity.stepEdits ? thread.activity.stepEdits : null
+    var edit = edits && index < edits.length ? edits[index] : null
+    return edit && typeof edit.added === "number" && typeof edit.removed === "number" ? edit : null
+  }
+
+  function editLabel(edit) {
+    return edit ? "+" + edit.added + " \u2212" + edit.removed : ""
+  }
+
+  function latestStep(thread) {
+    var steps = thread.activity && thread.activity.steps ? thread.activity.steps : []
+    if (steps.length === 0) return ""
+    var edit = stepEdit(thread, steps.length - 1)
+    return String(steps[steps.length - 1]) + (edit ? "  " + editLabel(edit) : "")
+  }
+
+  /**
+   * How many steps the open session lists: at least 5, and more (up to the
+   * bridge's 20) while the agent rail leaves the card taller than its content.
+   * Set by the body's `fitSteps()`.
+   */
+  property int stepLimit: 5
+
+  /** The open session's latest steps, newest last, as `{ text, edit }`. */
   function recentSteps(thread) {
     var steps = thread && thread.activity && thread.activity.steps ? thread.activity.steps : []
     var result = []
-    for (var index = Math.max(0, steps.length - 5); index < steps.length; index++) result.push(String(steps[index]))
+    for (var index = Math.max(0, steps.length - stepLimit); index < steps.length; index++) {
+      result.push({ text: String(steps[index]), edit: stepEdit(thread, index) })
+    }
     return result
   }
 
@@ -496,6 +541,126 @@ Panel {
     })
   }
 
+  // --- keyboard --------------------------------------------------------------
+  // Arrows (or h/j/k/l) pick a session, Enter opens it, Esc goes back, and
+  // in an open session a / d / A answer a permission, 1-9 pick a question
+  // option, x dismisses a turn-end item, and t jumps to the terminal.
+
+  /** The session row the arrow keys point at; drawn once a key was pressed. */
+  property int sessionCursor: 0
+  property bool keyboardNav: false
+  /** True while a custom-answer field has focus: every key then goes to the field, not the shortcuts. */
+  property bool typingAnswer: false
+  /** Asks the matching question card to pick option `number` (1-based), or to submit. */
+  signal optionKeyPressed(string itemId, int number)
+  signal submitKeyPressed(string itemId)
+
+  /** Set when a shortcut opened the card: FloatingBuddy then takes keyboard focus without a click. */
+  property bool keyboardOpened: false
+
+  onOpenedChanged: {
+    keyboardNav = false
+    sessionCursor = 0
+    typingAnswer = false
+    if (!opened) keyboardOpened = false
+  }
+
+  function cursorThread() {
+    if (currentThreads.length === 0) return null
+    return currentThreads[Math.max(0, Math.min(sessionCursor, currentThreads.length - 1))]
+  }
+
+  /** The open session's first item that a key can answer or dismiss. */
+  function keyItem(kinds) {
+    var items = openThread ? openThread.items : []
+    for (var index = 0; index < items.length; index++) {
+      if (kinds.indexOf(String(items[index].kind)) >= 0) return items[index]
+    }
+    return null
+  }
+
+  function switchProvider(direction) {
+    var tabs = showOtherTab ? shownProviders.concat(["other"]) : shownProviders
+    if (tabs.length === 0) return
+    var index = tabs.indexOf(selectedProvider)
+    selectedProvider = tabs[(Math.max(0, index) + direction + tabs.length) % tabs.length]
+  }
+
+  function moveCursor(dx, dy) {
+    keyboardNav = true
+    if (selectedThreadId !== "") {
+      if (dx < 0) selectedThreadId = ""
+      return
+    }
+    if (dx !== 0) {
+      switchProvider(dx)
+      return
+    }
+    if (currentThreads.length > 0) sessionCursor = Math.max(0, Math.min(currentThreads.length - 1, sessionCursor + dy))
+  }
+
+  function activateCursor() {
+    keyboardNav = true
+    if (selectedThreadId === "") {
+      var thread = cursorThread()
+      if (thread) selectedThreadId = thread.threadId
+      return
+    }
+    var question = keyItem(["question"])
+    if (question) submitKeyPressed(question.id)
+  }
+
+  function goBackOrClose() {
+    if (selectedThreadId !== "") selectedThreadId = ""
+    else close()
+  }
+
+  function respondKey(item, decision) {
+    Bridge.respond({ threadId: openThread.threadId, requestId: item.id, decision: decision }).then(function() {
+      if (root.hostWidget && typeof root.hostWidget.refreshSnapshot === "function") root.hostWidget.refreshSnapshot()
+    }).catch(function(error) {
+      console.warn("hommies keyboard response failed:", error)
+    })
+  }
+
+  function dismissKey() {
+    var item = keyItem(["attention", "finished"])
+    if (item) respondKey(item, "cancel")
+  }
+
+  function handleTextKey(text) {
+    keyboardNav = true
+    var thread = selectedThreadId !== "" ? openThread : cursorThread()
+    if (text === "t") {
+      if (thread && thread.activity && thread.activity.focusable === true) focusTerminal(thread)
+      return
+    }
+    if (selectedThreadId === "") {
+      // 1-9 open the session at that position in the list.
+      if (/^[1-9]$/.test(text) && Number(text) <= currentThreads.length) selectedThreadId = currentThreads[Number(text) - 1].threadId
+      return
+    }
+    var permission = keyItem(["permission"])
+    if (permission) {
+      if (text === "a") respondKey(permission, "accept")
+      else if (text === "d") respondKey(permission, "decline")
+      else if (text === "A" && permission.canAcceptAlways === true) respondKey(permission, "acceptAlways")
+      return
+    }
+    var question = keyItem(["question"])
+    if (question && /^[1-9]$/.test(text)) optionKeyPressed(question.id, Number(text))
+  }
+
+  /** The keys that do something right now, shown under the panel once a key was used. */
+  readonly property string keyHint: {
+    if (selectedThreadId === "") return "\u2191\u2193 select  \u00b7  \u21b5 open  \u00b7  \u2190\u2192 agent  \u00b7  t terminal  \u00b7  esc close"
+    var permission = keyItem(["permission"])
+    if (permission) return "a allow  \u00b7  d deny" + (permission.canAcceptAlways === true ? "  \u00b7  A always" : "") + "  \u00b7  t terminal  \u00b7  esc back"
+    if (keyItem(["question"])) return "1\u20139 option  \u00b7  \u21b5 submit  \u00b7  t terminal  \u00b7  esc back"
+    if (keyItem(["attention", "finished"])) return "x dismiss  \u00b7  t terminal  \u00b7  esc back"
+    return "t terminal  \u00b7  esc back"
+  }
+
   // FloatingBuddy.qml instantiates `body` inside its own card.
   readonly property Component body: bodyComponent
 
@@ -505,18 +670,53 @@ Panel {
     PanelKeyCatcher {
       id: keyCatcher
       readonly property real contentHeight: content.implicitHeight
-      onCloseRequested: root.close()
+      blocked: root.typingAnswer
+      onCloseRequested: root.goBackOrClose()
+      onMoveRequested: function (dx, dy) { root.moveCursor(dx, dy) }
+      onActivateRequested: root.activateCursor()
+      onDeleteRequested: root.dismissKey()
+      onTextKey: function (text) { root.handleTextKey(text) }
 
       Item {
         id: content
         width: parent.width
         implicitHeight: Math.max(providerTabs.implicitHeight, sessionColumn.implicitHeight)
 
+        // The card is as tall as the agent rail; fill the space it leaves
+        // under a session with more of its steps instead of a gap. Run after
+        // layout settles (callLater), so a changed limit cannot loop.
+        function fitSteps() {
+          if (!root.openThread) {
+            root.stepLimit = 5
+            return
+          }
+          var shown = root.recentSteps(root.openThread).length
+          var spare = providerTabs.implicitHeight - sessionColumn.implicitHeight
+          var rowHeight = stepProbe.implicitHeight + Style.space(2)
+          var next = Math.max(5, Math.min(20, shown + Math.floor(spare / Math.max(1, rowHeight))))
+          if (next !== root.stepLimit) root.stepLimit = next
+        }
+        Connections {
+          target: root
+          function onOpenThreadChanged() { Qt.callLater(content.fitSteps) }
+        }
+
+        // Measures one step row (same font as the step list).
+        Text {
+          id: stepProbe
+          visible: false
+          text: "Ag"
+          textFormat: Text.PlainText
+          font.family: root.bar ? root.bar.fontFamily : Style.font.family
+          font.pixelSize: Style.font.caption
+        }
+
         // Vertical rail of logo-only provider tabs.
         Column {
           id: providerTabs
           width: Style.space(40)
           spacing: Style.space(6)
+          onImplicitHeightChanged: Qt.callLater(content.fitSteps)
 
           Repeater {
             model: root.showOtherTab ? root.shownProviders.concat(["other"]) : root.shownProviders
@@ -542,6 +742,7 @@ Panel {
           anchors.leftMargin: Style.space(10)
           anchors.right: parent.right
           spacing: Style.space(8)
+          onImplicitHeightChanged: Qt.callLater(content.fitSteps)
 
           Text {
             textFormat: Text.PlainText
@@ -562,6 +763,7 @@ Panel {
             delegate: SessionRow {
               width: parent.width
               threadData: modelData
+              hasCursor: root.keyboardNav && root.selectedThreadId === "" && index === Math.min(root.sessionCursor, root.currentThreads.length - 1)
               foreground: root.barForeground
               fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
               fontSize: Style.font.body
@@ -631,16 +833,53 @@ Panel {
 
                 Repeater {
                   model: root.recentSteps(threadColumn.threadData)
-                  delegate: Text {
+                  delegate: Item {
+                    id: stepRow
                     width: parent.width
-                    leftPadding: Style.space(8)
-                    text: modelData
-                    textFormat: Text.PlainText
-                    elide: Text.ElideRight
-                    color: root.barForeground
-                    opacity: index === root.recentSteps(threadColumn.threadData).length - 1 ? 0.9 : 0.55
-                    font.family: root.bar ? root.bar.fontFamily : Style.font.family
-                    font.pixelSize: Style.font.caption
+                    height: stepText.implicitHeight
+                  
+                    readonly property real stepOpacity: index === root.recentSteps(threadColumn.threadData).length - 1 ? 0.9 : 0.55
+                  
+                    Text {
+                      id: stepText
+                      anchors.left: parent.left
+                      anchors.right: editCounts.visible ? editCounts.left : parent.right
+                      anchors.rightMargin: editCounts.visible ? Style.space(6) : 0
+                      leftPadding: Style.space(8)
+                      text: modelData.text
+                      textFormat: Text.PlainText
+                      elide: Text.ElideRight
+                      color: root.barForeground
+                      opacity: stepRow.stepOpacity
+                      font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                      font.pixelSize: Style.font.caption
+                    }
+                    // Lines the edit adds and removes; the bridge never sees the edited text.
+                    Row {
+                      id: editCounts
+                      visible: modelData.edit !== null && (modelData.edit.added > 0 || modelData.edit.removed > 0)
+                      anchors.right: parent.right
+                      anchors.verticalCenter: stepText.verticalCenter
+                      spacing: Style.space(4)
+                      opacity: Math.min(1, stepRow.stepOpacity + 0.1)
+                  
+                      Text {
+                        visible: modelData.edit !== null && modelData.edit.added > 0
+                        text: modelData.edit ? "+" + modelData.edit.added : ""
+                        textFormat: Text.PlainText
+                        color: statusColors.success
+                        font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                        font.pixelSize: Style.font.caption
+                      }
+                      Text {
+                        visible: modelData.edit !== null && modelData.edit.removed > 0
+                        text: modelData.edit ? "\u2212" + modelData.edit.removed : ""
+                        textFormat: Text.PlainText
+                        color: statusColors.error
+                        font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                        font.pixelSize: Style.font.caption
+                      }
+                    }
                   }
                 }
               }
@@ -747,6 +986,19 @@ Panel {
                     }).catch(function(error) {
                       console.warn("hommies permission response failed:", error)
                     })
+                  }
+
+                  Connections {
+                    target: root
+                    function onOptionKeyPressed(itemId, number) {
+                      if (itemId !== itemDelegate.itemData.id || itemDelegate.questions.length === 0) return
+                      var question = itemDelegate.questions[itemDelegate.currentQuestion]
+                      var options = question && question.options ? question.options : []
+                      if (number <= options.length) itemDelegate.chooseOption(question, options[number - 1].label)
+                    }
+                    function onSubmitKeyPressed(itemId) {
+                      if (itemId === itemDelegate.itemData.id) itemDelegate.submitAnswers()
+                    }
                   }
 
                   readonly property color tone: root.itemTone(itemData)
@@ -951,6 +1203,7 @@ Panel {
                         clip: true
                         onTextEdited: itemDelegate.setCustomAnswer(questionColumn.questionData.id, text)
                         onAccepted: itemDelegate.submitAnswers()
+                        onActiveFocusChanged: root.typingAnswer = activeFocus
                       }
                     }
                   }
@@ -1011,6 +1264,55 @@ Panel {
                     opacity: 0.65
                     font.family: root.bar ? root.bar.fontFamily : Style.font.family
                     font.pixelSize: Style.font.caption
+                  }
+
+                  // The agent's full final message, folded by default. Long ones scroll inside
+                  // a capped box: the panel itself is sized to its content and does not scroll.
+                  Button {
+                    visible: typeof itemDelegate.itemData.message === "string" && itemDelegate.itemData.message.length > 0
+                    width: parent.width
+                    leftAlign: true
+                    text: root.messageOpen(itemDelegate.itemData) ? "\u25be Hide full message" : "\u25b8 Show full message"
+                    foreground: root.barForeground
+                    fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
+                    fontSize: Style.font.caption
+                    onClicked: root.toggleMessage(itemDelegate.itemData)
+                  }
+
+                  Flickable {
+                    id: messageBox
+                    visible: root.messageOpen(itemDelegate.itemData) && typeof itemDelegate.itemData.message === "string"
+                    width: parent.width
+                    height: visible ? Math.min(messageText.implicitHeight, Style.space(240)) : 0
+                    contentWidth: width
+                    contentHeight: messageText.implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    Text {
+                      id: messageText
+                      width: messageBox.width - Style.space(8)
+                      // markdown.js escapes the message and adds only formatting tags, never <img> or <a>.
+                      text: messageBox.visible ? Markdown.toStyledText(itemDelegate.itemData.message) : ""
+                      textFormat: Text.StyledText
+                      wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                      color: root.barForeground
+                      opacity: 0.85
+                      font.family: root.bar ? root.bar.fontFamily : Style.font.family
+                      font.pixelSize: Style.font.caption
+                    }
+
+                    // A thin bar on the right while the message is taller than the box.
+                    Rectangle {
+                      visible: messageBox.contentHeight > messageBox.height
+                      x: messageBox.width - width
+                      y: messageBox.contentY + messageBox.visibleArea.yPosition * messageBox.height
+                      width: Style.space(2)
+                      height: Math.max(Style.space(16), messageBox.visibleArea.heightRatio * messageBox.height)
+                      radius: width / 2
+                      color: root.barForeground
+                      opacity: 0.35
+                    }
                   }
 
                   Button {
@@ -1076,6 +1378,19 @@ Panel {
                 }
               }
             }
+          }
+
+          Text {
+            visible: root.keyboardNav
+            width: parent.width
+            text: root.keyHint
+            textFormat: Text.PlainText
+            wrapMode: Text.WordWrap
+            horizontalAlignment: Text.AlignHCenter
+            color: root.barForeground
+            opacity: 0.5
+            font.family: root.bar ? root.bar.fontFamily : Style.font.family
+            font.pixelSize: Style.font.caption
           }
         }
       }

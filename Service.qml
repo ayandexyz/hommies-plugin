@@ -35,12 +35,36 @@ Item {
   readonly property string character: typeof prefs.character === "string" && /^[A-Za-z0-9_-]+$/.test(prefs.character)
     ? prefs.character : "Hommie"
 
+  /** Asks the character to play an emote (see the contract in characters/Hommie.qml). */
+  signal emoteRequested(string name)
+
+  /** Finished-turn item ids already seen; null until the first snapshot, which never celebrates. */
+  property var seenFinished: null
+
+  /** Celebrates a turn that just finished, even while the mood shows something busier. */
+  function noticeFinished(next) {
+    var seen = {}
+    var fresh = false
+    var threads = next && next.threads ? next.threads : []
+    for (var threadIndex = 0; threadIndex < threads.length; threadIndex++) {
+      var items = threads[threadIndex].items || []
+      for (var itemIndex = 0; itemIndex < items.length; itemIndex++) {
+        if (items[itemIndex].kind !== "finished" || items[itemIndex].failure) continue
+        seen[items[itemIndex].id] = true
+        if (root.seenFinished !== null && !root.seenFinished[items[itemIndex].id]) fresh = true
+      }
+    }
+    root.seenFinished = seen
+    if (fresh) root.emoteRequested("celebrate")
+  }
+
   function refreshSnapshot() {
     Bridge.snapshot().then(function(next) {
       var json = JSON.stringify(next)
       if (json !== root.snapshotJson) {
         root.snapshotJson = json
         root.snapshot = next
+        root.noticeFinished(next)
       }
     }).catch(function(error) {
       console.warn("hommies snapshot failed:", error)
@@ -60,6 +84,46 @@ Item {
   function setDesktopNotifications(enabled) { savePrefs({ desktopNotifications: enabled === true }) }
   function setSounds(enabled) { savePrefs({ sounds: enabled === true }) }
   function setOverFullscreen(enabled) { savePrefs({ overFullscreen: enabled === true }) }
+
+  // --- outfit ----------------------------------------------------------------
+
+  /** Accessories the character can wear (see `outfit` in characters/Hommie.qml). */
+  readonly property var outfits: ["party", "beanie", "crown", "santa", "pumpkin", "bow", "glasses", "sunglasses", "scarf"]
+  /** The saved choice: "auto" (the season's, if any), "none", or one of `outfits`. */
+  readonly property string outfitChoice: prefs.outfit === "none" || outfits.indexOf(prefs.outfit) >= 0 ? prefs.outfit : "auto"
+  /** Today, refreshed every hour so Auto changes outfit on its own. */
+  property var today: new Date()
+  readonly property string seasonalOutfit: {
+    var month = today.getMonth(), day = today.getDate()
+    if ((month === 11 && day === 31) || (month === 0 && day === 1)) return "party"
+    if (month === 11) return "santa"
+    if (month === 9 && day >= 20) return "pumpkin"
+    return ""
+  }
+  /** What the character wears now; empty for nothing. */
+  readonly property string outfit: outfitChoice === "auto" ? seasonalOutfit : outfitChoice === "none" ? "" : outfitChoice
+
+  function setOutfit(choice) {
+    savePrefs({ outfit: choice === "none" || outfits.indexOf(choice) >= 0 ? choice : "auto" })
+  }
+  /** Steps through Auto, None, and every outfit. */
+  function cycleOutfit(direction) {
+    var order = ["auto", "none"].concat(outfits)
+    var index = order.indexOf(outfitChoice)
+    setOutfit(order[(index + direction + order.length) % order.length])
+  }
+  function outfitLabel(name) {
+    var labels = { auto: "Auto", none: "None", party: "Party hat", beanie: "Beanie", crown: "Crown", santa: "Santa hat",
+      pumpkin: "Pumpkin", bow: "Bow", glasses: "Glasses", sunglasses: "Sunglasses", scarf: "Scarf" }
+    return labels[name] || String(name)
+  }
+
+  Timer {
+    interval: 60 * 60 * 1000
+    running: true
+    repeat: true
+    onTriggered: root.today = new Date()
+  }
 
   function savePrefs(changes) {
     var next = {}
@@ -247,6 +311,101 @@ Item {
   }
 
   // --- floating UI -----------------------------------------------------------
+
+  // --- keyboard shortcuts ----------------------------------------------------
+  // Plugins cannot bind keys, so Hyprland binds call these over shell IPC:
+  // `omarchy-shell hommies <method>` (see README).
+
+  /** The oldest item waiting on you: permissions and questions first, then turn ends. */
+  function nextPending() {
+    var threads = snapshot && snapshot.threads ? snapshot.threads : []
+    var rank = function(kind) { return kind === "permission" || kind === "question" ? 0 : kind === "attention" ? 1 : 2 }
+    var best = null
+    for (var threadIndex = 0; threadIndex < threads.length; threadIndex++) {
+      var items = threads[threadIndex].items || []
+      for (var itemIndex = 0; itemIndex < items.length; itemIndex++) {
+        var item = items[itemIndex]
+        var better = best === null || rank(item.kind) < rank(best.item.kind)
+          || (rank(item.kind) === rank(best.item.kind) && String(item.createdAt) < String(best.item.createdAt))
+        if (better) best = { thread: threads[threadIndex], item: item }
+      }
+    }
+    return best
+  }
+
+  /** The newest session whose terminal can be focused, busy ones first. */
+  function focusableSession() {
+    var sessions = snapshot && snapshot.sessions ? snapshot.sessions : []
+    var fallback = ""
+    for (var index = 0; index < sessions.length; index++) {
+      if (sessions[index].focusable !== true) continue
+      if (sessions[index].state !== "idle") return String(sessions[index].threadId)
+      if (fallback === "") fallback = String(sessions[index].threadId)
+    }
+    return fallback
+  }
+
+  /** Opens the card with keyboard focus, so its keys work without a click. */
+  function openCard() {
+    var panel = panelLoader.item
+    if (!panel || !root.screen) return false
+    panel.keyboardOpened = true
+    panel.open()
+    return true
+  }
+
+  IpcHandler {
+    target: "hommies"
+
+    function open(): string { return root.openCard() ? "open" : "unavailable" }
+    function close(): void { if (panelLoader.item) panelLoader.item.close() }
+    function toggle(): string {
+      if (panelLoader.item && panelLoader.item.opened) {
+        panelLoader.item.close()
+        return "closed"
+      }
+      return root.openCard() ? "open" : "unavailable"
+    }
+    /** Opens the card on the oldest waiting permission or question (else a turn end). */
+    function jumpToPending(): string {
+      var next = root.nextPending()
+      var panel = panelLoader.item
+      if (next === null) return "none"
+      if (!panel) return "unavailable"
+      var provider = String(next.item.provider)
+      panel.selectedProvider = panel.isBuiltIn(provider) ? provider : "other"
+      panel.selectedThreadId = String(next.thread.threadId)
+      return root.openCard() ? String(next.item.kind) : "unavailable"
+    }
+    /** Focuses the terminal of the session waiting on you, else the newest busy one. */
+    function focusTerminal(): string {
+      var next = root.nextPending()
+      var threadId = next !== null ? String(next.thread.threadId) : root.focusableSession()
+      if (threadId === "") return "none"
+      Bridge.focus(threadId).catch(function(error) { console.warn("hommies could not focus the terminal:", error) })
+      return "ok"
+    }
+    function toggleSounds(): string {
+      root.setSounds(!root.sounds)
+      return root.sounds ? "on" : "off"
+    }
+    function toggleNotifications(): string {
+      root.setDesktopNotifications(!root.desktopNotifications)
+      return root.desktopNotifications ? "on" : "off"
+    }
+    /** Sets the outfit ("auto", "none", or a name) and returns what he wears now ("none" for nothing). */
+    function outfit(name: string): string {
+      if (name !== "auto" && name !== "none" && root.outfits.indexOf(name) < 0) return "unknown"
+      root.setOutfit(name)
+      return root.outfit === "" ? "none" : root.outfit
+    }
+    /** Plays an emote: greet, celebrate, dizzy, wink, yawn, or look. Urgent moods block them. */
+    function emote(name: string): string {
+      if (["greet", "celebrate", "dizzy", "wink", "yawn", "look"].indexOf(name) < 0) return "unknown"
+      root.emoteRequested(name)
+      return "ok"
+    }
+  }
 
   Loader {
     id: panelLoader
