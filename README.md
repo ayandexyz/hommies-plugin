@@ -27,7 +27,7 @@ file edits, and when a turn ends you can read the agent's full final message.
 1. Install the companion package:
 
    ```sh
-   npm install -g @thisisayande/hommies@0.2.3
+   npm install -g @thisisayande/hommies@0.3.1
    ```
 
 2. Add the plugin:

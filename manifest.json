@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.ayandexyz.hommies",
   "name": "Hommies",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "Ayan De",
   "license": "MIT",
   "description": "Hommie, a floating companion that watches your coding agents (Claude Code, Codex, OpenCode, Omacode, Gemini CLI, Antigravity, Grok Build) and lets you approve permissions, answer questions, and see when turns finish.",
