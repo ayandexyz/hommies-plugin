@@ -188,7 +188,8 @@ BarWidget {
 
       Text {
         id: bellGlyph
-        text: "\ud83d\udd14"
+        // Nerd Font bell in the bar font: monochrome, so it takes the theme's bar color.
+        text: "\uf0f3"
         textFormat: Text.PlainText
         color: button.foreground
         font.family: button.fontFamily
