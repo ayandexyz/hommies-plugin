@@ -80,6 +80,9 @@ Restart the shell after updating either part. A running shell keeps the
 plugin code it first loaded, and the bridge it started keeps running the old
 package version. Run `hommies setup` again when a release adds agents or hook
 events (0.2 does both); until then the panel says the hooks are out of date.
+From 0.3, also run it after installing or upgrading to OpenCode 2.x: setup
+registers the OpenCode 2.x plugin (or both, with 1.x and 2.x installed), and
+the panel cannot tell you it is missing.
 
 ## Remove
 
@@ -92,7 +95,8 @@ omarchy plugin remove io.github.ayandexyz.hommies
 `hommies uninstall` takes out only the entries `hommies setup` added and keeps
 the rest of each config. Run it before removing the npm package. Hooks left
 behind by removing the package first do nothing, except OpenCode's `plugin`
-entry, which you then delete from `~/.config/opencode/opencode.json` by hand.
+(1.x) and `plugins` (2.x) entries, which you then delete from
+`~/.config/opencode/opencode.json` by hand.
 
 ## What it does on your machine
 
