@@ -57,7 +57,11 @@ file edits, and when a turn ends you can read the agent's full final message.
 
    It lists the agents it finds and asks which ones to connect, and it saves a
    copy of each config next to it (`<file>.hommies-backup-<time>`) before
-   changing it. For Codex, approve the new hooks in its `/hooks` screen; restart
+   changing it. It also writes `~/.local/bin/hommies-bridge`, a two-line
+   launcher that runs the bridge with the Node that ran setup, so the plugin
+   can start it even when npm installs commands outside the shell's PATH (nvm,
+   fnm, volta). `hommies uninstall` removes the entries and the launcher.
+   For Codex, approve the new hooks in its `/hooks` screen; restart
    OpenCode, Gemini CLI, `agy`, and `grok` so they load the new entries. To add
    the entries by hand instead, follow the
    [manual setup](https://github.com/ayandexyz/Hommies/blob/main/packages/omarchy-bridge/README.md)
