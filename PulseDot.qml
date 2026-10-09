@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 
 // A solid dot with a ripple that grows and fades out on a loop. Marks
 // sessions that are thinking or running tools. The ripple only animates
@@ -7,7 +8,7 @@ import qs.Commons
 Item {
   id: root
 
-  property color tone: Color.accent
+  property color tone: Commons.Color.accent
   property bool running: true
   property real size: Style.space(7)
 

@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 
 // The floating Hommies character. A full-screen, transparent layer
@@ -102,8 +103,8 @@ PanelWindow {
     x: root.besideX(width)
     y: root.besideY(height)
 
-    color: Color.popups.background
-    borderSpec: Border.surfaceSpec("popups", "border", Color.popups.border, Math.max(1, Style.space(2)))
+    color: Commons.Color.popups.background
+    borderSpec: Border.surfaceSpec("popups", "border", Commons.Color.popups.border, Math.max(1, Style.space(2)))
     padding: Style.spacing.popupPadding
     radius: Style.cornerRadius
     visible: opacity > 0
@@ -155,7 +156,7 @@ PanelWindow {
       text: menuToggle.label
       textFormat: Text.PlainText
       elide: Text.ElideRight
-      color: Color.popups.text
+      color: Commons.Color.popups.text
       font.family: Style.font.family
       font.pixelSize: Style.font.bodySmall
     }
@@ -165,7 +166,7 @@ PanelWindow {
       anchors.right: parent.right
       anchors.verticalCenter: parent.verticalCenter
       checked: menuToggle.checked
-      foreground: Color.popups.text
+      foreground: Commons.Color.popups.text
       trackHeight: 22
       cursorPad: Style.space(2)
       onToggled: menuToggle.toggled()
@@ -181,8 +182,8 @@ PanelWindow {
     x: root.besideX(width)
     y: root.besideY(height)
 
-    color: Color.popups.background
-    borderSpec: Border.surfaceSpec("popups", "border", Color.popups.border, Math.max(1, Style.space(2)))
+    color: Commons.Color.popups.background
+    borderSpec: Border.surfaceSpec("popups", "border", Commons.Color.popups.border, Math.max(1, Style.space(2)))
     padding: Style.spacing.popupPadding
     radius: Style.cornerRadius
     visible: opacity > 0
@@ -228,7 +229,7 @@ PanelWindow {
             + (root.host.outfitChoice === "auto" && root.host.outfit !== "" ? " (" + root.host.outfitLabel(root.host.outfit) + ")" : "")
           textFormat: Text.PlainText
           elide: Text.ElideRight
-          color: Color.popups.text
+          color: Commons.Color.popups.text
           font.family: Style.font.family
           font.pixelSize: Style.font.bodySmall
         }
@@ -317,14 +318,14 @@ PanelWindow {
       height: countText.implicitHeight + Style.space(4)
       width: Math.max(height, countText.implicitWidth + Style.space(10))
       radius: height / 2
-      color: Color.accent
+      color: Commons.Color.accent
 
       Text {
         id: countText
         anchors.centerIn: parent
         text: root.host.totalCount > 99 ? "99+" : String(root.host.totalCount)
         textFormat: Text.PlainText
-        color: Color.background
+        color: Commons.Color.background
         font.family: Style.font.family
         font.pixelSize: Style.font.caption
         font.bold: true
@@ -339,16 +340,16 @@ PanelWindow {
       width: statusText.implicitWidth + Style.space(16)
       height: statusText.implicitHeight + Style.space(8)
       radius: height / 2
-      color: Color.popups.background
+      color: Commons.Color.popups.background
       border.width: Style.normalBorderWidth
-      border.color: Color.popups.border
+      border.color: Commons.Color.popups.border
 
       Text {
         id: statusText
         anchors.centerIn: parent
         text: root.host.statusLine
         textFormat: Text.PlainText
-        color: Color.popups.text
+        color: Commons.Color.popups.text
         font.family: Style.font.family
         font.pixelSize: Style.font.caption
       }

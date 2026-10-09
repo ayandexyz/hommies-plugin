@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Commons
+import qs.Commons as Commons
 import ".."
 
 // Hommie: the Omarchy mark as a face. The 15×15 frame from /usr/share/omarchy/icon.txt
@@ -117,7 +118,7 @@ Item {
         case "error": return statusColors.error
         case "ratelimit": return statusColors.warning
         case "finished": return statusColors.success
-        default: return Color.accent
+        default: return Commons.Color.accent
       }
     }
 
@@ -128,7 +129,7 @@ Item {
     property var cfg: states.idle
     property string state: ""
     property string badge: ""
-    property color badgeColor: Color.accent
+    property color badgeColor: Commons.Color.accent
     property var tweens: ({})
     property var particles: []
     property real clock: Math.random() * 5
@@ -166,13 +167,13 @@ Item {
 
     function outfitColor(cell) {
       switch (cell) {
-        case "a": return rgba(Color.accent)
+        case "a": return rgba(Commons.Color.accent)
         case "w": return rgba(statusColors.warning)
         case "e": return rgba(statusColors.error)
         case "s": return rgba(statusColors.success)
         case "k": return rgba(statusColors.working)
-        case "f": return rgba(Color.foreground)
-        default: return rgba(Color.popups.background)
+        case "f": return rgba(Commons.Color.foreground)
+        default: return rgba(Commons.Color.popups.background)
       }
     }
 
@@ -219,13 +220,13 @@ Item {
       ctx.translate(gx, gy)
       ctx.scale(s.outfitS, s.outfitS)
       ctx.lineWidth = u * 0.35
-      ctx.strokeStyle = rgba(Color.foreground)
+      ctx.strokeStyle = rgba(Commons.Color.foreground)
       for (var side = -1; side <= 1; side += 2) {
         if (shades) {
           roundRect(ctx, side * u * 1.6 - u * 1.25, -u * 0.85, u * 2.5, u * 1.7, u * 0.5)
           ctx.fillStyle = rgba(s.col)
           ctx.fill()
-          ctx.fillStyle = rgba(Color.popups.background, 0.7)
+          ctx.fillStyle = rgba(Commons.Color.popups.background, 0.7)
           ctx.fillRect(side * u * 1.6 - u * 0.75, -u * 0.5, u * 0.45, u * 0.3)
         } else {
           ctx.beginPath()
@@ -237,7 +238,7 @@ Item {
       ctx.beginPath()
       ctx.moveTo(-u * 0.35, -u * 0.15)
       ctx.lineTo(u * 0.35, -u * 0.15)
-      ctx.strokeStyle = shades ? rgba(s.col) : rgba(Color.foreground)
+      ctx.strokeStyle = shades ? rgba(s.col) : rgba(Commons.Color.foreground)
       ctx.stroke()
     }
 
@@ -529,7 +530,7 @@ Item {
 
       // Tile, so the mark reads on any wallpaper.
       roundRect(ctx, -u * 0.6, -u * 0.6, side + u * 1.2, side + u * 1.2, u * 1.2)
-      ctx.fillStyle = rgba(Color.popups.background)
+      ctx.fillStyle = rgba(Commons.Color.popups.background)
       ctx.fill()
 
       // Outer ring, as one path so neighbouring cells don't leave seams.
@@ -620,7 +621,7 @@ Item {
     function drawBadge(ctx, R, bx, by) {
       var t = clock
       var col = rgba(badgeColor)
-      var ink = rgba(Color.popups.background)
+      var ink = rgba(Commons.Color.popups.background)
       ctx.save()
       ctx.translate(bx, by)
       ctx.scale(s.badgeS, s.badgeS)
