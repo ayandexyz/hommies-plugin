@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "bridge.js" as Bridge
 import "markdown.js" as Markdown
@@ -64,7 +65,7 @@ Panel {
         anchors.centerIn: parent
         text: providerTab.pendingCount > 9 ? "9+" : String(providerTab.pendingCount)
         textFormat: Text.PlainText
-        color: Color.background
+        color: Commons.Color.background
         font.family: providerTab.fontFamily
         font.pixelSize: Style.font.caption * 0.85
         font.bold: true

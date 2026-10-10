@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 
 // Status colors taken from the active Omarchy theme's colors.toml, so error,
 // success, and working states match the theme instead of fixed hex values.
@@ -15,12 +16,12 @@ Item {
   property var tokens: ({})
   readonly property bool lightMode: tokens.mode === "light"
 
-  readonly property color error: pick(["red", "color1"], Color.urgent)
+  readonly property color error: pick(["red", "color1"], Commons.Color.urgent)
   readonly property color warning: pick(["orange", "yellow", "color3"], "#f97316")
   readonly property color success: pick(["green", "color2"], "#22c55e")
-  readonly property color working: pick(["cyan", "blue", "color6", "color4"], Color.accent)
-  readonly property color attention: Color.accent
-  readonly property color muted: Color.muted
+  readonly property color working: pick(["cyan", "blue", "color6", "color4"], Commons.Color.accent)
+  readonly property color attention: Commons.Color.accent
+  readonly property color muted: Commons.Color.muted
 
   function pick(keys, fallback) {
     for (var index = 0; index < keys.length; index++) {
@@ -43,7 +44,7 @@ Item {
   }
 
   FileView {
-    path: Color.currentThemePath + "/colors.toml"
+    path: Commons.Color.currentThemePath + "/colors.toml"
     watchChanges: true
     printErrors: false
     onFileChanged: reload()

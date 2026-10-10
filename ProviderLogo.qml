@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import qs.Commons
+import qs.Commons as Commons
 
 // Provider mark adapted from omarchy-tokentracker. The source SVG is hidden
 // and recolored so it follows the active Omarchy theme. The Antigravity mark
@@ -10,7 +11,7 @@ Item {
   id: root
 
   property string providerId: ""
-  property color tint: Color.foreground
+  property color tint: Commons.Color.foreground
   property string fontFamily: Style.font.family
 
   readonly property string logoFile: providerId === "claude" ? "claude.svg"

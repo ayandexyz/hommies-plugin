@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "bridge.js" as Bridge
 
@@ -211,7 +212,7 @@ BarWidget {
           anchors.centerIn: parent
           text: root.totalCount > 99 ? "99+" : String(root.totalCount)
           textFormat: Text.PlainText
-          color: Color.background
+          color: Commons.Color.background
           font.family: button.fontFamily
           font.pixelSize: Style.font.caption
           font.bold: true
