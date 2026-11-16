@@ -9,7 +9,7 @@ import "markdown.js" as Markdown
  * Hommies panel.
  *
  * Opened by BarWidget.qml on click. Lists pending questions and permissions
- * grouped by thread. Claude, OpenCode, and Omacode questions retain their headers, options,
+ * grouped by thread. Claude and OpenCode questions retain their headers, options,
  * descriptions, and multi-select behavior. The configured answer surface
  * decides whether controls here are interactive or mirror the CLI prompt.
  * `attention` items are notify-only: the agent ended its turn with a plain-text
@@ -241,9 +241,9 @@ Panel {
     sessionCursor = 0
   }
 
-  readonly property var builtInProviders: ["claude", "codex", "opencode", "omacode", "gemini", "antigravity", "grok"]
+  readonly property var builtInProviders: ["claude", "codex", "opencode", "gemini", "antigravity", "grok"]
   /** Tabs shown before any agent is connected or active; the newer agents appear once they are. */
-  readonly property var defaultProviders: ["claude", "codex", "opencode", "omacode"]
+  readonly property var defaultProviders: ["claude", "codex", "opencode"]
 
   function isBuiltIn(provider) {
     return builtInProviders.indexOf(String(provider)) >= 0
@@ -256,7 +256,7 @@ Panel {
 
   function providerName(provider) {
     return provider === "codex" ? "Codex" : provider === "opencode" ? "OpenCode"
-      : provider === "omacode" ? "Omacode" : provider === "gemini" ? "Gemini"
+      : provider === "gemini" ? "Gemini"
       : provider === "antigravity" ? "Agy" : provider === "grok" ? "Grok"
       : provider === "other" ? "Other"
       : provider === "claude" ? "Claude" : String(provider || "Agent")
@@ -278,8 +278,8 @@ Panel {
 
   /**
    * Built-in agents that get a tab: the ones with Hommies hooks (the bridge's
-   * `hooksConnected`) plus any that reported a session or item, such as
-   * Omacode, which has no config to detect. `defaultProviders` until one qualifies.
+   * `hooksConnected`) plus any that reported a session or item.
+   * `defaultProviders` until one qualifies.
    */
   readonly property var shownProviders: {
     var connected = hostWidget && hostWidget.snapshot && hostWidget.snapshot.hooksConnected
@@ -404,6 +404,15 @@ Panel {
   function toggleQuestionAnswerSurface() {
     if (!hostWidget || typeof hostWidget.setQuestionAnswerSurface !== "function") return
     hostWidget.setQuestionAnswerSurface(root.questionsAnsweredInTopbar ? "cli" : "topbar")
+  }
+
+  // Hiding the floating character from its own right-click menu leaves no
+  // menu to bring it back from, so this mirrors the toggle here too.
+  readonly property bool buddyHidden: hostWidget && typeof hostWidget.hideBuddy === "boolean" ? hostWidget.hideBuddy : false
+
+  function toggleBuddyHidden() {
+    if (!hostWidget || typeof hostWidget.setHideBuddy !== "function") return
+    hostWidget.setHideBuddy(!root.buddyHidden)
   }
 
   function sessionActivity(provider) {
@@ -807,6 +816,26 @@ Panel {
               trackHeight: 22
               cursorPad: Style.space(2)
               onToggled: root.toggleSounds()
+            }
+
+            Text {
+              textFormat: Text.PlainText
+              anchors.verticalCenter: parent.verticalCenter
+              leftPadding: Style.space(8)
+              text: "Hommie"
+              color: root.barForeground
+              opacity: 0.72
+              font.family: root.bar ? root.bar.fontFamily : Style.font.family
+              font.pixelSize: Style.font.caption
+            }
+
+            ToggleSwitch {
+              anchors.verticalCenter: parent.verticalCenter
+              checked: !root.buddyHidden
+              foreground: root.barForeground
+              trackHeight: 22
+              cursorPad: Style.space(2)
+              onToggled: root.toggleBuddyHidden()
             }
           }
         }

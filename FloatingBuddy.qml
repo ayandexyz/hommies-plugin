@@ -23,6 +23,9 @@ PanelWindow {
   required property var panel
 
   readonly property bool cardOpen: panel ? panel.opened === true : false
+  // The card's contents exist only while it is open and for a minute after,
+  // so a half-typed answer survives a quick close and reopen.
+  property bool keepCard: false
   property bool menuOpen: false
   // Card and menu open toward the middle of the screen.
   readonly property bool opensLeft: buddy.x + buddy.width / 2 > width / 2
@@ -78,7 +81,17 @@ PanelWindow {
 
   onWidthChanged: placeBuddy()
   onHeightChanged: placeBuddy()
-  onCardOpenChanged: if (cardOpen) Qt.callLater(function() { if (cardBody.item) cardBody.item.forceActiveFocus() })
+  onCardOpenChanged: {
+    if (!cardOpen) return
+    keepCard = true
+    Qt.callLater(function() { if (cardBody.item) cardBody.item.forceActiveFocus() })
+  }
+
+  Timer {
+    interval: 60 * 1000
+    running: root.keepCard && !root.cardOpen
+    onTriggered: root.keepCard = false
+  }
 
   // Outside-click dismissal while the card or menu is open.
   MouseArea {
@@ -132,7 +145,7 @@ PanelWindow {
         id: cardBody
         width: parent.width
         height: card.bodyHeight
-        active: root.panel !== null
+        active: root.panel !== null && (root.cardOpen || root.keepCard)
         sourceComponent: root.panel ? root.panel.body : null
       }
     }
@@ -199,6 +212,11 @@ PanelWindow {
       width: menu.width - menu.contentLeftInset - menu.contentRightInset
       spacing: Style.space(10)
 
+      MenuToggle {
+        label: "Hide Hommie"
+        checked: root.host.hideBuddy
+        onToggled: root.host.setHideBuddy(!checked)
+      }
       MenuToggle {
         label: "Answer questions here"
         checked: root.host.questionAnswerSurface === "topbar"

@@ -3,7 +3,7 @@
 ![Hommie's moods and expressions](preview.png)
 
 Hommie is a floating companion for the Omarchy desktop that watches your coding
-agents (Claude Code, Codex, OpenCode, Omacode, Gemini CLI, Antigravity, and Grok
+agents (Claude Code, Codex, OpenCode, freecode, Gemini CLI, Antigravity, and Grok
 Build). When an agent asks for a permission, asks you a question, or finishes a
 turn, Hommie's mood changes and the item shows up in a card beside it and in a
 bell in the top bar. You can approve or decline permissions and answer
@@ -41,9 +41,9 @@ file edits, and when a turn ends you can read the agent's full final message.
 
 3. Connect your agents. This is a separate step that you choose to run.
 
-   Hommie only sees an agent that reports to the bridge. Omacode reports to it
-   out of the box. The others each need an entry in their own config: a hook in
-   `~/.claude/settings.json`, `~/.codex/hooks.json`, `~/.gemini/settings.json`
+   Hommie only sees an agent that reports to the bridge. Each agent needs an
+   entry in its own config: a hook in `~/.claude/settings.json`,
+   `~/.codex/hooks.json`, `~/.freecode/settings.json`, `~/.gemini/settings.json`
    (Gemini CLI), `~/.gemini/config/hooks.json` (Antigravity), or
    `~/.grok/hooks/hommies.json` (Grok Build), or a plugin entry in
    `~/.config/opencode/opencode.json`.
@@ -136,7 +136,7 @@ Santa hat, pumpkin, bow, glasses, sunglasses, or a scarf. **Auto** (the
 default) dresses him for the season: a pumpkin from 20 October, a Santa hat in
 December, and a party hat over New Year.
 
-**Answering from the bar.** Claude Code, OpenCode, Omacode, Antigravity, and
+**Answering from the bar.** Claude Code, OpenCode, freecode, Antigravity, and
 Grok Build questions can be answered here. Antigravity and Grok cannot take an
 answer from a hook directly, so your answer reaches the agent as the reason its
 own question prompt was skipped; their screens may show that prompt as

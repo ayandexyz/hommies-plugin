@@ -15,8 +15,8 @@ import "markdown.js" as Markdown
  * with their sessions and items. Settings live in the character's
  * right-click menu instead (see FloatingBuddy.qml).
  *
- * Rendering rules for items are the same as Panel.qml: Claude, OpenCode, and
- * Omacode questions keep their headers, options, descriptions, and
+ * Rendering rules for items are the same as Panel.qml: Claude and OpenCode
+ * questions keep their headers, options, descriptions, and
  * multi-select; `attention` items are notify-only; `finished` items render as
  * "Done"; failed turns render red or orange; busy sessions are listed with
  * their latest steps; "Go to terminal" focuses the agent's Hyprland window.
@@ -247,9 +247,9 @@ Panel {
     sessionCursor = 0
   }
 
-  readonly property var builtInProviders: ["claude", "codex", "opencode", "omacode", "gemini", "antigravity", "grok"]
+  readonly property var builtInProviders: ["claude", "codex", "opencode", "gemini", "antigravity", "grok"]
   /** Tabs shown before any agent is connected or active; the newer agents appear once they are. */
-  readonly property var defaultProviders: ["claude", "codex", "opencode", "omacode"]
+  readonly property var defaultProviders: ["claude", "codex", "opencode"]
 
   function isBuiltIn(provider) {
     return builtInProviders.indexOf(String(provider)) >= 0
@@ -262,7 +262,7 @@ Panel {
 
   function providerName(provider) {
     return provider === "codex" ? "Codex" : provider === "opencode" ? "OpenCode"
-      : provider === "omacode" ? "Omacode" : provider === "gemini" ? "Gemini"
+      : provider === "gemini" ? "Gemini"
       : provider === "antigravity" ? "Antigravity" : provider === "grok" ? "Grok"
       : provider === "other" ? "Other"
       : provider === "claude" ? "Claude" : String(provider || "Agent")
@@ -276,8 +276,8 @@ Panel {
 
   /**
    * Built-in agents that get a tab: the ones with Hommies hooks (the bridge's
-   * `hooksConnected`) plus any that reported a session or item, such as
-   * Omacode, which has no config to detect. `defaultProviders` until one qualifies.
+   * `hooksConnected`) plus any that reported a session or item.
+   * `defaultProviders` until one qualifies.
    */
   readonly property var shownProviders: {
     var connected = hostWidget && hostWidget.snapshot && hostWidget.snapshot.hooksConnected

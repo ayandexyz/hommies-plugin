@@ -34,12 +34,25 @@ Item {
   implicitWidth: 96
   implicitHeight: 96
 
-  function poke() { engine.poke() }
-  function emote(name) { return engine.startEmote(String(name)) }
+  function poke() {
+    wake()
+    engine.poke()
+  }
+  function emote(name) {
+    wake()
+    return engine.startEmote(String(name))
+  }
 
-  onMoodChanged: engine.setState(mood)
-  onOutfitChanged: engine.setOutfit(outfit)
+  onMoodChanged: {
+    wake()
+    engine.setState(mood)
+  }
+  onOutfitChanged: {
+    wake()
+    engine.setOutfit(outfit)
+  }
   Component.onCompleted: {
+    lastTickMs = Date.now()
     engine.setState(mood, true)
     engine.setOutfit(outfit)
     engine.startEmote("greet")
@@ -387,9 +400,59 @@ Item {
       }
     }
 
+    function near(a, b) { return Math.abs(a - b) < 0.002 }
+
+    /**
+     * Frames per second the loop needs right now: 30 while something eases
+     * or follows the pointer, 20 for the approval bounce and passing
+     * particles, 12 for the long working/thinking/rate-limit loops, 6 for
+     * the slow sleep bob, and 0 once he is completely still. Each frame
+     * costs the shell a few ms whatever is drawn, so the moods that can
+     * last for hours get the lowest rates.
+     */
+    function frameRate() {
+      if (emote || Object.keys(tweens).length > 0) return 30
+      var tx = state === "sleeping" ? 0 : root.lookX
+      var ty = state === "sleeping" ? 0 : root.lookY
+      var target = moodColor(state)
+      var swaying = cfg.bounces || cfg.bobs
+      if (!near(s.eyeX, tx) || !near(s.eyeY, ty) || !near(s.tilt, cfg.tilt || 0)
+        || !near(s.sx, 1) || !near(s.sy, 1) || (!swaying && !near(s.oy, 0))
+        || !near(s.snakeOn, cfg.snake ? 1 : 0)
+        || Math.abs(s.col[0] - target.r) > 0.004 || Math.abs(s.col[1] - target.g) > 0.004
+        || Math.abs(s.col[2] - target.b) > 0.004) return 30
+      if (cfg.bounces) return 20
+      if (cfg.snake || badge === "dots" || cfg.sweat) return 12
+      if (cfg.bobs) return 6
+      if (particles.length > 0) return 20
+      return 0
+    }
+
+    /** Snaps every eased value onto its target so the last frame drawn is exact. */
+    function settle() {
+      var target = moodColor(state)
+      s.eyeX = state === "sleeping" ? 0 : root.lookX
+      s.eyeY = state === "sleeping" ? 0 : root.lookY
+      s.tilt = cfg.tilt || 0
+      s.sx = 1
+      s.sy = 1
+      s.oy = 0
+      s.snakeOn = cfg.snake ? 1 : 0
+      s.col = [target.r, target.g, target.b]
+    }
+
+    /** Seconds until the next scheduled change (a blink, or an idle emote). */
+    function secondsToNextEvent() {
+      var at = nextBlink
+      if (state === "idle") at = Math.min(at, nextIdleEmote)
+      return Math.max(0.05, at - clock)
+    }
+
     function update(dt) {
-      dt = Math.min(dt, 0.1)
+      // The clock keeps real time (the loop rests between blinks); motion
+      // still steps by at most 0.1 s so a stall doesn't jump him around.
       clock += dt
+      dt = Math.min(dt, 0.1)
       var nowMs = clock * 1000
 
       for (var prop in tweens) {
@@ -731,10 +794,53 @@ Item {
     onPaint: engine.draw(getContext("2d"), root.width, root.height)
   }
 
-  FrameAnimation {
+  // The frame loop. The canvas is painted by the CPU, so it runs only as
+  // fast as the motion needs (see engine.frameRate()) and stops between
+  // blinks while he is still, instead of repainting on every vsync.
+  property real lastTickMs: Date.now()
+  property bool resting: false
+
+  /** Brings the loop back to full speed; call before changing anything he shows. */
+  function wake() {
+    if (resting) {
+      // Catch the clock up first, so a tween or emote started now times from now.
+      var now = Date.now()
+      engine.clock += (now - lastTickMs) / 1000
+      lastTickMs = now
+      resting = false
+    }
+    if (frameLoop.interval > 34) {
+      frameLoop.interval = 16
+      frameLoop.restart()
+    }
+  }
+
+  onLookXChanged: wake()
+  onLookYChanged: wake()
+  onVisibleChanged: if (visible) wake()
+  onRunningChanged: if (running) wake()
+  // A theme change recolors him, so draw at least one new frame.
+  readonly property string themeKey: String(Commons.Color.accent) + Commons.Color.popups.background
+    + Commons.Color.foreground + statusColors.working
+  onThemeKeyChanged: wake()
+
+  Timer {
+    id: frameLoop
+    interval: 16
+    repeat: true
     running: root.running && root.visible
     onTriggered: {
-      engine.update(frameTime)
+      var now = Date.now()
+      engine.update((now - root.lastTickMs) / 1000)
+      root.lastTickMs = now
+      var fps = engine.frameRate()
+      if (fps === 0) {
+        engine.settle()
+        root.resting = true
+        interval = Math.round(engine.secondsToNextEvent() * 1000)
+      } else {
+        interval = Math.round(1000 / fps)
+      }
       canvas.requestPaint()
     }
   }

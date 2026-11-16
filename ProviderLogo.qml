@@ -17,7 +17,6 @@ Item {
   readonly property string logoFile: providerId === "claude" ? "claude.svg"
     : providerId === "codex" ? "codex.svg"
     : providerId === "opencode" ? "opencode.svg"
-    : providerId === "omacode" ? "omacode.svg"
     : providerId === "antigravity" ? "antigravity.svg"
     : providerId === "grok" ? "grok.svg"
     : ""
@@ -50,7 +49,7 @@ Item {
     anchors.centerIn: parent
     visible: !root.logoReady
     text: root.providerId === "claude" ? "C" : root.providerId === "codex" ? "O"
-      : root.providerId === "opencode" ? "OC" : root.providerId === "omacode" ? "OM"
+      : root.providerId === "opencode" ? "OC"
       : root.providerId === "gemini" ? "G" : root.providerId === "antigravity" ? "AG"
       : root.providerId === "grok" ? "X"
       : root.providerId === "other" ? "+" : "?"
